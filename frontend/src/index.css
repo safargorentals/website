@@ -536,13 +536,30 @@ code {
 
 /* ---------- Hero + search ---------- */
 
+/* The photo sits on ::before so it can slowly zoom; ::after is the dark overlay */
 .hero {
   position: relative;
+  overflow: hidden;
+  isolation: isolate;
   color: var(--hero-muted);
-  background:
-    linear-gradient(100deg, rgba(10, 18, 36, 0.92) 0%, rgba(10, 18, 36, 0.7) 45%, rgba(10, 18, 36, 0.25) 100%),
-    url('/images/hero.webp') center / cover no-repeat,
-    var(--hero-bg);
+  background: var(--hero-bg);
+}
+
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.hero::before {
+  background: url('/images/hero.webp') center / cover no-repeat;
+  animation: hero-zoom 18s cubic-bezier(0.2, 0.6, 0.2, 1) both;
+}
+
+.hero::after {
+  background: linear-gradient(100deg, rgba(10, 18, 36, 0.92) 0%, rgba(10, 18, 36, 0.7) 45%, rgba(10, 18, 36, 0.25) 100%);
 }
 
 .hero__inner {
@@ -1890,4 +1907,318 @@ code {
 
 .enquiry__actions .btn--danger {
   margin-left: auto;
+}
+
+/* ---------- Motion ---------- */
+
+:root {
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@keyframes hero-zoom {
+  from {
+    transform: scale(1.12);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+/* Hero entrance: copy lines cascade in, then the search card rises */
+.hero__copy > * {
+  animation: fade-up 0.8s var(--ease-out) both;
+}
+.hero__copy > :nth-child(1) {
+  animation-delay: 0.1s;
+}
+.hero__copy > :nth-child(2) {
+  animation-delay: 0.2s;
+}
+.hero__copy > :nth-child(3) {
+  animation-delay: 0.32s;
+}
+.hero__copy > :nth-child(4) {
+  animation-delay: 0.44s;
+}
+
+.hero .search {
+  animation: rise-in 0.9s var(--ease-out) 0.35s both;
+}
+
+/* Scroll reveal (useReveal adds .is-visible). --i staggers siblings.
+   "backwards" fill only holds the start frame during the delay, so once the
+   animation ends hover transforms work normally. */
+.reveal {
+  opacity: 0;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  animation: fade-up 0.75s var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+/* Car cards sit inside a reveal wrapper; let them fill the grid cell */
+.car-grid > .reveal {
+  display: flex;
+}
+
+.car-grid > .reveal > .car-card {
+  flex: 1;
+}
+
+/* Header shadow once scrolled */
+.site-header {
+  transition:
+    box-shadow 0.3s,
+    background 0.3s;
+}
+
+.site-header--scrolled {
+  box-shadow: 0 6px 24px rgba(15, 27, 51, 0.08);
+}
+
+/* Buttons: lift + a light sheen sweeping across primary buttons */
+.btn {
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    transform 0.2s var(--ease-out),
+    box-shadow 0.2s;
+}
+
+.btn--primary {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn--primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+.btn--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(232, 89, 12, 0.3);
+}
+
+.btn--primary:hover:not(:disabled)::after {
+  transform: translateX(120%);
+  transition: transform 0.7s ease;
+}
+
+.btn--primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Type cards: arrow slides in on hover */
+.type-card {
+  transition:
+    transform 0.3s var(--ease-out),
+    box-shadow 0.3s;
+}
+
+.type-card:hover {
+  transform: translateY(-4px);
+}
+
+.type-card:hover {
+  box-shadow: 0 16px 36px rgba(15, 27, 51, 0.25);
+}
+
+.type-card__go {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  opacity: 0;
+  transform: translate(-8px, 8px) rotate(-45deg);
+  transition:
+    opacity 0.25s,
+    transform 0.3s var(--ease-out);
+}
+
+.type-card:hover .type-card__go,
+.type-card:focus-visible .type-card__go {
+  opacity: 1;
+  transform: rotate(-45deg);
+}
+
+/* Benefits: lift and the icon fills with colour */
+.benefit,
+.step {
+  transition:
+    transform 0.3s var(--ease-out),
+    border-color 0.25s,
+    box-shadow 0.25s;
+}
+
+.benefit:hover,
+.step:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary-soft);
+  box-shadow: 0 16px 36px rgba(15, 27, 51, 0.1);
+}
+
+.benefit__icon,
+.step__icon {
+  transition:
+    background 0.25s,
+    color 0.25s,
+    transform 0.3s var(--ease-out);
+}
+
+.benefit:hover .benefit__icon,
+.step:hover .step__icon {
+  background: var(--primary);
+  color: #fff;
+  transform: scale(1.08) rotate(-4deg);
+}
+
+.step:hover .step__num {
+  color: var(--primary-soft);
+}
+
+.step__num {
+  transition: color 0.25s;
+}
+
+/* Trip bar slides in after a search */
+.trip-bar {
+  animation: fade-up 0.5s var(--ease-out) both;
+}
+
+/* Modal: backdrop fades, dialog pops */
+.modal-backdrop {
+  animation: fade-in 0.2s ease both;
+}
+
+.modal {
+  animation: pop-in 0.35s var(--ease-out) both;
+}
+
+/* FAQ answers slide open */
+.faq details[open] p {
+  animation: fade-up 0.35s var(--ease-out) both;
+}
+
+.faq summary {
+  transition: color 0.2s;
+}
+
+.faq summary:hover {
+  color: var(--primary);
+}
+
+/* Car spec chips light up on card hover */
+.car-card__specs li {
+  transition: background 0.2s;
+}
+
+.car-card:hover .car-card__specs li {
+  background: var(--primary-soft);
+}
+
+/* WhatsApp button: soft pulsing ring */
+.whatsapp-float::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--whatsapp);
+  z-index: -1;
+  animation: pulse-ring 2.2s ease-out infinite;
+}
+
+.whatsapp-float {
+  isolation: isolate;
+  animation: pop-in 0.5s var(--ease-out) 1s backwards;
+  transition: transform 0.2s var(--ease-out);
+}
+
+.whatsapp-float:hover {
+  transform: scale(1.08);
+}
+
+/* Respect "reduce motion": show everything immediately, no movement */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
 }

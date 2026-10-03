@@ -4,6 +4,7 @@ import CarCard from '../components/CarCard.jsx'
 import EnquiryModal from '../components/EnquiryModal.jsx'
 import Icon from '../components/Icon.jsx'
 import SearchWidget from '../components/SearchWidget.jsx'
+import useReveal from '../useReveal.js'
 import {
   CAR_TYPES,
   CONTACT_PHONE,
@@ -79,6 +80,7 @@ export default function Home() {
   const [trip, setTrip] = useState(null)
   const [bookingCar, setBookingCar] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
 
   const load = useCallback(async (selectedType, pageNum) => {
     setLoading(true)
@@ -106,6 +108,17 @@ export default function Home() {
       .catch(() => {})
   }, [])
 
+  // Header gets a shadow once the page is scrolled
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Re-scan for new .reveal elements whenever the car lists change
+  useReveal(`${type}|${cars.length}|${featured.length}|${loading}`)
+
   const closeModal = useCallback(() => setBookingCar(null), [])
 
   function onSearch(t) {
@@ -123,7 +136,7 @@ export default function Home() {
 
   return (
     <>
-      <header className="site-header">
+      <header className={`site-header ${scrolled ? 'site-header--scrolled' : ''}`}>
         <div className="container site-header__inner">
           <a href="/" className="logo">
             Safar<span>Go</span>
@@ -177,16 +190,24 @@ export default function Home() {
       </section>
 
       <section className="section container" aria-labelledby="types-title">
-        <div className="section__head">
+        <div className="section__head reveal">
           <div>
             <p className="eyebrow">Browse by type</p>
             <h2 id="types-title">Find a car that fits your trip</h2>
           </div>
         </div>
         <div className="type-grid">
-          {CAR_TYPES.map((t) => (
-            <button key={t.value} className="type-card" onClick={() => pickType(t.value)}>
+          {CAR_TYPES.map((t, i) => (
+            <button
+              key={t.value}
+              className="type-card reveal"
+              style={{ '--i': i }}
+              onClick={() => pickType(t.value)}
+            >
               <img src={t.image} alt="" loading="lazy" />
+              <span className="type-card__go">
+                <Icon name="arrow" size={18} />
+              </span>
               <span className="type-card__text">
                 <strong>{t.label}</strong>
                 <small>{t.blurb}</small>
@@ -199,7 +220,7 @@ export default function Home() {
       {featured.length > 0 && (
         <section className="section section--tint" aria-labelledby="featured-title">
           <div className="container">
-            <div className="section__head">
+            <div className="section__head reveal">
               <div>
                 <p className="eyebrow">Popular picks</p>
                 <h2 id="featured-title">Cars we recommend</h2>
@@ -209,8 +230,10 @@ export default function Home() {
               </a>
             </div>
             <div className="car-grid">
-              {featured.slice(0, 4).map((car) => (
-                <CarCard key={car.id} car={car} days={days} onBook={setBookingCar} />
+              {featured.slice(0, 4).map((car, i) => (
+                <div key={car.id} className="reveal" style={{ '--i': i }}>
+                  <CarCard car={car} days={days} onBook={setBookingCar} />
+                </div>
               ))}
             </div>
           </div>
@@ -218,7 +241,7 @@ export default function Home() {
       )}
 
       <main id="fleet" className="section container">
-        <div className="section__head">
+        <div className="section__head reveal">
           <div>
             <p className="eyebrow">Our fleet</p>
             <h2>{type ? `${typeLabel(type)} cars` : 'All cars'}</h2>
@@ -282,8 +305,10 @@ export default function Home() {
         )}
 
         <div className="car-grid">
-          {cars.map((car) => (
-            <CarCard key={car.id} car={car} days={days} onBook={setBookingCar} />
+          {cars.map((car, i) => (
+            <div key={car.id} className="reveal" style={{ '--i': i % 4 }}>
+              <CarCard car={car} days={days} onBook={setBookingCar} />
+            </div>
           ))}
           {loading &&
             page === 1 &&
@@ -301,15 +326,15 @@ export default function Home() {
 
       <section id="why" className="section section--tint" aria-labelledby="why-title">
         <div className="container">
-          <div className="section__head section__head--center">
+          <div className="section__head section__head--center reveal">
             <div>
               <p className="eyebrow">Why SafarGo</p>
               <h2 id="why-title">Renting a car made simple</h2>
             </div>
           </div>
           <div className="benefit-grid">
-            {BENEFITS.map((b) => (
-              <div key={b.title} className="benefit">
+            {BENEFITS.map((b, i) => (
+              <div key={b.title} className="benefit reveal" style={{ '--i': i % 3 }}>
                 <span className="benefit__icon">
                   <Icon name={b.icon} size={24} />
                 </span>
@@ -322,7 +347,7 @@ export default function Home() {
       </section>
 
       <section id="how" className="section container" aria-labelledby="how-title">
-        <div className="section__head section__head--center">
+        <div className="section__head section__head--center reveal">
           <div>
             <p className="eyebrow">How it works</p>
             <h2 id="how-title">On the road in four steps</h2>
@@ -330,7 +355,7 @@ export default function Home() {
         </div>
         <ol className="steps">
           {STEPS.map((s, i) => (
-            <li key={s.title} className="step">
+            <li key={s.title} className="step reveal" style={{ '--i': i }}>
               <span className="step__num">{i + 1}</span>
               <span className="step__icon">
                 <Icon name={s.icon} size={22} />
@@ -343,7 +368,7 @@ export default function Home() {
       </section>
 
       <section className="cta">
-        <div className="container cta__inner">
+        <div className="container cta__inner reveal">
           <div>
             <h2>Not sure which car to pick?</h2>
             <p>Tell us about your trip and we'll suggest the right car and price.</p>
@@ -367,15 +392,15 @@ export default function Home() {
       </section>
 
       <section id="faq" className="section container faq-wrap" aria-labelledby="faq-title">
-        <div className="section__head section__head--center">
+        <div className="section__head section__head--center reveal">
           <div>
             <p className="eyebrow">FAQs</p>
             <h2 id="faq-title">Questions people ask</h2>
           </div>
         </div>
         <div className="faq">
-          {FAQS.map((f) => (
-            <details key={f.q}>
+          {FAQS.map((f, i) => (
+            <details key={f.q} className="reveal" style={{ '--i': i }}>
               <summary>{f.q}</summary>
               <p>{f.a}</p>
             </details>
