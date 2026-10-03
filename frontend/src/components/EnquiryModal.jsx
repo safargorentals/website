@@ -160,7 +160,7 @@ export default function EnquiryModal({ car, trip, onClose }) {
 
             <div className="grid-2">
               {field('name', 'Your name', { autoComplete: 'name', autoFocus: true }, true)}
-              {field('phone', 'Phone', { type: 'tel', autoComplete: 'tel', placeholder: '+92 300 1234567' }, true)}
+              {field('phone', 'Phone', { type: 'tel', autoComplete: 'tel', placeholder: '+91 98765 43210' }, true)}
             </div>
 
             {field('email', 'Email (optional)', { type: 'email', autoComplete: 'email' })}
@@ -170,8 +170,8 @@ export default function EnquiryModal({ car, trip, onClose }) {
               {field('pickupTime', 'Pickup time', { type: 'time' }, true)}
               {field('endDate', 'Return date', { type: 'date', min: form.startDate || todayString() }, true)}
               {field('dropoffTime', 'Return time', { type: 'time' }, true)}
-              {field('pickupLocation', 'Pickup location', { placeholder: 'e.g. Lahore' }, true)}
-              {field('dropoffLocation', 'Drop-off location', { placeholder: 'e.g. Islamabad' }, true)}
+              {field('pickupLocation', 'Pickup location', { placeholder: 'e.g. Kochi' }, true)}
+              {field('dropoffLocation', 'Drop-off location', { placeholder: 'e.g. Thrissur' }, true)}
             </div>
 
             <label className={`field ${errors.message ? 'field--error' : ''}`}>

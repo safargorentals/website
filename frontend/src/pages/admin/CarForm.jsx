@@ -15,7 +15,7 @@ function toForm(car) {
     transmission: car?.transmission ?? 'automatic',
     fuel: car?.fuel ?? 'petrol',
     pricePerDay: car?.pricePerDay ?? '',
-    currency: car?.currency ?? 'PKR',
+    currency: car?.currency ?? 'INR',
     images: car?.images ?? [],
     description: car?.description ?? '',
     isAvailable: car?.isAvailable ?? true,

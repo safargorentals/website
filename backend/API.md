@@ -15,7 +15,7 @@ All responses are JSON. Car objects always use this shape (camelCase,
   "transmission": "automatic",
   "fuel": "diesel",
   "pricePerDay": 18000,
-  "currency": "PKR",
+  "currency": "INR",
   "images": ["https://placehold.co/800x500?text=Toyota+Fortuner"],
   "description": "Rugged 7-seater SUV for long journeys and rough roads.",
   "isFeatured": true,
@@ -53,7 +53,7 @@ Example: `GET /api/cars?type=suv&limit=10`
       "transmission": "automatic",
       "fuel": "diesel",
       "pricePerDay": 18000,
-      "currency": "PKR",
+      "currency": "INR",
       "images": ["https://placehold.co/800x500?text=Toyota+Fortuner"],
       "description": "Rugged 7-seater SUV for long journeys and rough roads.",
       "isFeatured": true,
@@ -94,7 +94,7 @@ One car by id. `:id` must be a positive integer.
   "transmission": "automatic",
   "fuel": "petrol",
   "pricePerDay": 6500,
-  "currency": "PKR",
+  "currency": "INR",
   "images": ["https://placehold.co/800x500?text=Toyota+Corolla"],
   "description": "Comfortable, fuel-efficient sedan - a favourite for city and highway trips.",
   "isFeatured": true,
@@ -126,11 +126,11 @@ Example request:
 ```json
 {
   "name": "Ali Raza",
-  "phone": "+92 300 1234567",
+  "phone": "+91 98765 43210",
   "email": "ali@example.com",
   "carId": 1,
-  "pickupLocation": "Lahore",
-  "dropoffLocation": "Islamabad",
+  "pickupLocation": "Kochi",
+  "dropoffLocation": "Thrissur",
   "startDate": "2026-10-10",
   "endDate": "2026-10-13",
   "pickupTime": "10:00",
@@ -236,7 +236,7 @@ Required: `name` (2-100 chars), `brand` (2-50), `type`
 `transmission` (`manual`|`automatic`), `fuel`
 (`petrol`|`diesel`|`hybrid`|`electric`|`cng`), `pricePerDay` (0-1000000).
 
-Optional: `currency` (3 uppercase letters, default `"PKR"`), `images`
+Optional: `currency` (3 uppercase letters, default `"INR"`), `images`
 (max 10, each must start with `https://`, default `[]`), `description`
 (max 2000 chars), `isAvailable` (default `true`).
 (There is no `isFeatured` here - featuring is a separate PATCH below.)
@@ -252,7 +252,7 @@ Example request:
   "transmission": "manual",
   "fuel": "diesel",
   "pricePerDay": 12000,
-  "currency": "PKR",
+  "currency": "INR",
   "images": ["https://placehold.co/800x500?text=Isuzu+D-Max"],
   "description": "Tough work pickup",
   "isAvailable": true
@@ -354,12 +354,12 @@ email, case-insensitive), `carId`, `from`/`to` (filter by created date,
     {
       "id": 1,
       "name": "Ali Raza",
-      "phone": "+92 300 1234567",
+      "phone": "+91 98765 43210",
       "email": "ali@example.com",
       "carId": 1,
       "carName": "Toyota Corolla",
-      "pickupLocation": "Lahore",
-      "dropoffLocation": "Islamabad",
+      "pickupLocation": "Kochi",
+      "dropoffLocation": "Thrissur",
       "startDate": "2026-10-10",
       "endDate": "2026-10-13",
       "pickupTime": "10:00",

@@ -21,7 +21,7 @@ export const ENQUIRY_STATUSES = [
   { value: 'closed', label: 'Closed' },
 ]
 
-export const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+92 300 0000000'
+export const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+91 98765 43210'
 export const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || ''
 
 export function typeImage(value) {
@@ -36,8 +36,11 @@ export function capitalize(s) {
   return s ? s[0].toUpperCase() + s.slice(1) : ''
 }
 
-export function formatPrice(amount, currency = 'PKR') {
-  return `${currency} ${Number(amount).toLocaleString('en-US')}`
+// INR shows as "₹4,500" with Indian digit grouping (₹1,00,000).
+export function formatPrice(amount, currency = 'INR') {
+  const n = Number(amount)
+  if (currency === 'INR') return `₹${n.toLocaleString('en-IN')}`
+  return `${currency} ${n.toLocaleString('en-US')}`
 }
 
 export function telHref(phone) {
