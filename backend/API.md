@@ -335,6 +335,89 @@ Upload FIRST, then paste the returned URLs into the car create/update
 body (`images` array, max 10 per car). The car endpoints only accept
 `https://res.cloudinary.com/...` URLs - anything else is rejected with 400.
 
+## Admin enquiry management
+
+All routes start with `/api/admin/enquiries` and require an admin session
+(no cookie -> `401 {"error":"Unauthorized"}`).
+
+### GET /api/admin/enquiries
+
+Newest first. Optional query params: `status`
+(`new`|`contacted`|`confirmed`|`closed`), `search` (matches name, phone or
+email, case-insensitive), `carId`, `from`/`to` (filter by created date,
+`YYYY-MM-DD`, both ends inclusive), `page` (default 1), `limit`
+(default 20, max 100).
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Ali Raza",
+      "phone": "+92 300 1234567",
+      "email": "ali@example.com",
+      "carId": 1,
+      "carName": "Toyota Corolla",
+      "pickupLocation": "Lahore",
+      "dropoffLocation": "Islamabad",
+      "startDate": "2026-10-10",
+      "endDate": "2026-10-13",
+      "pickupTime": "10:00",
+      "dropoffTime": "18:00",
+      "message": "Need a car for a family trip",
+      "status": "new",
+      "notes": null,
+      "createdAt": "2026-10-03T10:00:00.000Z"
+    }
+  ],
+  "page": 1,
+  "totalPages": 1,
+  "total": 1
+}
+```
+
+### GET /api/admin/enquiries/:id
+
+One enquiry with full details. Unknown id -> `404 {"error":"Enquiry not found"}`.
+
+### GET /api/admin/enquiries/stats
+
+Dashboard counts (always all five keys, zeroes included):
+
+```json
+{ "new": 3, "contacted": 1, "confirmed": 0, "closed": 2, "total": 6 }
+```
+
+### PATCH /api/admin/enquiries/:id
+
+Only `status` and `notes` may change - anything else (name, phone, ...)
+is rejected with 400. `notes` is trimmed, max 2000 chars.
+
+```json
+{ "status": "contacted", "notes": "Called the customer" }
+```
+
+Returns the updated enquiry in the same shape as above.
+
+### DELETE /api/admin/enquiries/:id
+
+```json
+{ "ok": true }
+```
+
+Unknown id -> `404 {"error":"Enquiry not found"}`.
+
+### Frontend note
+
+Enquiry objects always use camelCase (`pickupLocation`, `startDate`,
+`createdAt`, ...). Dates are plain `YYYY-MM-DD` and times are `HH:MM`,
+except `createdAt` which is a full ISO timestamp. `carName` (and `carId`)
+are `null` when the car was deleted - show something like "Car removed"
+in that case. The dashboard can call `/stats` for the status cards and the
+list endpoint for the table.
+
+All invalid input -> `400 {"error":"Validation failed","fields":{...}}`.
+
 ## Errors
 
 Invalid input returns 400 with the invalid field(s) listed:
