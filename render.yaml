@@ -5,10 +5,10 @@ services:
     name: safargo
     runtime: node
     plan: free
-    buildCommand: npm --prefix frontend ci && npm --prefix frontend run build && npm --prefix backend ci --omit=dev
+    buildCommand: npm run build
     # db:init is safe to re-run (IF NOT EXISTS everywhere), so the schema is
     # always up to date before the server starts.
-    startCommand: npm --prefix backend run db:init && npm --prefix backend start
+    startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
