@@ -10,6 +10,20 @@ function errorHandler(err, req, res, next) {
     return res.status(413).json({ error: 'Request body too large' });
   }
 
+  // Multer (file upload) errors - clean messages, no stack traces
+  if (err.name === 'MulterError') {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ error: 'File too large (max 5 MB per image)' });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({ error: 'Too many files (max 5 per request)' });
+    }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({ error: 'Unexpected field - use the "images" field' });
+    }
+    return res.status(400).json({ error: 'Invalid upload' });
+  }
+
   const status = err.status || 500;
   // For anything unexpected, only a generic message reaches the client -
   // never a stack trace or internal details.

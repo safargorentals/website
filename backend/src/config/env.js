@@ -16,6 +16,11 @@ const env = {
   databaseUrl: process.env.DATABASE_URL,
   jwtSecret: process.env.JWT_SECRET,
   frontendUrl: process.env.FRONTEND_URL,
+  // Cloudinary image uploads (admin only). Read from the environment,
+  // never hardcoded anywhere.
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
+  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
 };
 
 // Admin session cookie settings, driven by the environment so they can be

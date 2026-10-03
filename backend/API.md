@@ -297,6 +297,44 @@ Enquiries linked to the car are kept; the database sets their `car_id` to NULL.
 
 All invalid input -> `400 {"error":"Validation failed","fields":{...}}`.
 
+## Admin image uploads
+
+### POST /api/admin/uploads
+
+Admin session required. Rate limited to 30 requests per 15 minutes.
+
+Send `multipart/form-data` with field name `images`: up to 5 files,
+max 5 MB each, JPEG/PNG/WebP only. Files are checked by their real
+content (magic bytes), not just the extension, and are never written to
+disk. Each file goes to the `safargo/cars` folder on Cloudinary with
+automatic quality/format optimization and a random file name.
+
+Example:
+
+```bash
+curl -X POST http://localhost:3000/api/admin/uploads -b cookies.txt \
+  -F "images=@photo1.jpg" -F "images=@photo2.png"
+```
+
+Success -> 200
+
+```json
+{ "urls": ["https://res.cloudinary.com/<cloud>/image/upload/safargo/cars/<random>.jpg"] }
+```
+
+Wrong file type, oversized file, too many files, or wrong field name ->
+clean `400`/`413` JSON, never a stack trace:
+
+```json
+{ "error": "File too large (max 5 MB per image)" }
+```
+
+### Frontend note
+
+Upload FIRST, then paste the returned URLs into the car create/update
+body (`images` array, max 10 per car). The car endpoints only accept
+`https://res.cloudinary.com/...` URLs - anything else is rejected with 400.
+
 ## Errors
 
 Invalid input returns 400 with the invalid field(s) listed:

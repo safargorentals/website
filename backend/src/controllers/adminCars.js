@@ -38,7 +38,14 @@ const adminCarSchema = z.object({
     .regex(/^[A-Z]{3}$/, 'Currency must be 3 uppercase letters')
     .default('PKR'),
   images: z
-    .array(z.string().regex(/^https:\/\//, 'Image URLs must start with https://'))
+    .array(
+      z
+        .string()
+        .regex(
+          /^https:\/\/res\.cloudinary\.com\/.+/,
+          'Image URLs must be https:// links from res.cloudinary.com (upload them with POST /api/admin/uploads first)'
+        )
+    )
     .max(10, 'At most 10 images are allowed')
     .default([]),
   description: z
