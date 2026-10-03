@@ -20,6 +20,9 @@ const WRITABLE_FIELDS = [
   'is_available',
 ];
 
+const DEFAULT_LIMIT = 12;
+const MAX_LIMIT = 50;
+
 function getPool() {
   if (!pool) {
     throw new Error('Database not configured. Set DATABASE_URL in your .env file.');
@@ -27,7 +30,11 @@ function getPool() {
   return pool;
 }
 
-// List cars. Optional filters: type, brand, is_available, search (matches name).
+// List cars with optional filters and pagination.
+// Filters: type, brand, transmission, fuel, is_available, search (matches name).
+// Pagination: limit (rows per page) and offset (rows to skip).
+// Returns { rows, count } where count is the total number of matching cars,
+// ignoring pagination (the controller uses it to compute totalPages).
 async function getAllCars(filters = {}) {
   const where = [];
   const params = [];
@@ -39,18 +46,30 @@ async function getAllCars(filters = {}) {
 
   if (filters.type) addEq('type', filters.type);
   if (filters.brand) addEq('brand', filters.brand);
+  if (filters.transmission) addEq('transmission', filters.transmission);
+  if (filters.fuel) addEq('fuel', filters.fuel);
   if (typeof filters.is_available === 'boolean') addEq('is_available', filters.is_available);
   if (filters.search) {
     params.push(`%${filters.search}%`);
     where.push(`name ILIKE $${params.length}`);
   }
 
-  let sql = 'SELECT * FROM cars';
-  if (where.length > 0) sql += ' WHERE ' + where.join(' AND ');
-  sql += ' ORDER BY is_featured DESC, name ASC';
+  const whereSql = where.length > 0 ? ' WHERE ' + where.join(' AND ') : '';
 
-  const { rows } = await getPool().query(sql, params);
-  return rows;
+  // Keep limit/offset in a safe range even if the caller passes odd values
+  const limit = Math.min(MAX_LIMIT, Math.max(1, Number(filters.limit) || DEFAULT_LIMIT));
+  const offset = Math.max(0, Number(filters.offset) || 0);
+
+  const { rows } = await getPool().query(
+    `SELECT * FROM cars${whereSql} ORDER BY is_featured DESC, name ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+    [...params, limit, offset]
+  );
+  const { rows: countRows } = await getPool().query(
+    `SELECT COUNT(*)::int AS count FROM cars${whereSql}`,
+    params
+  );
+
+  return { rows, count: countRows[0].count };
 }
 
 // Cars for the home page "featured" section

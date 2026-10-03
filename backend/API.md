@@ -1,0 +1,121 @@
+# SafarGo API
+
+Base URL (local): `http://localhost:3000`
+
+All responses are JSON. Car objects always use this shape (camelCase,
+`pricePerDay` is a number):
+
+```json
+{
+  "id": 4,
+  "name": "Toyota Fortuner",
+  "brand": "Toyota",
+  "type": "suv",
+  "seats": 7,
+  "transmission": "automatic",
+  "fuel": "diesel",
+  "pricePerDay": 18000,
+  "currency": "PKR",
+  "images": ["https://placehold.co/800x500?text=Toyota+Fortuner"],
+  "description": "Rugged 7-seater SUV for long journeys and rough roads.",
+  "isFeatured": true,
+  "isAvailable": true
+}
+```
+
+## Cars
+
+### GET /api/cars
+
+List cars. All query params are optional:
+
+| Param | Type | Default | Notes |
+|---|---|---|---|
+| type | string | - | e.g. `sedan`, `suv`, `hatchback` |
+| brand | string | - | e.g. `Toyota` |
+| transmission | string | - | e.g. `automatic` |
+| fuel | string | - | e.g. `petrol`, `diesel` |
+| search | string | - | partial match on car name |
+| page | int | 1 | 1-based page number |
+| limit | int | 12 | results per page, max 50 |
+
+Example: `GET /api/cars?type=suv&limit=10`
+
+```json
+{
+  "data": [
+    {
+      "id": 4,
+      "name": "Toyota Fortuner",
+      "brand": "Toyota",
+      "type": "suv",
+      "seats": 7,
+      "transmission": "automatic",
+      "fuel": "diesel",
+      "pricePerDay": 18000,
+      "currency": "PKR",
+      "images": ["https://placehold.co/800x500?text=Toyota+Fortuner"],
+      "description": "Rugged 7-seater SUV for long journeys and rough roads.",
+      "isFeatured": true,
+      "isAvailable": true
+    }
+  ],
+  "page": 1,
+  "totalPages": 1
+}
+```
+
+### GET /api/cars/featured
+
+Featured cars only, in `featured_order` sequence.
+
+```json
+{
+  "data": [
+    { "id": 1, "name": "Toyota Corolla", "...": "..." },
+    { "id": 4, "name": "Toyota Fortuner", "...": "..." }
+  ]
+}
+```
+
+### GET /api/cars/:id
+
+One car by id. `:id` must be a positive integer.
+
+`GET /api/cars/1` -> 200
+
+```json
+{
+  "id": 1,
+  "name": "Toyota Corolla",
+  "brand": "Toyota",
+  "type": "sedan",
+  "seats": 5,
+  "transmission": "automatic",
+  "fuel": "petrol",
+  "pricePerDay": 6500,
+  "currency": "PKR",
+  "images": ["https://placehold.co/800x500?text=Toyota+Corolla"],
+  "description": "Comfortable, fuel-efficient sedan - a favourite for city and highway trips.",
+  "isFeatured": true,
+  "isAvailable": true
+}
+```
+
+`GET /api/cars/999` -> 404
+
+```json
+{ "error": "Car not found" }
+```
+
+## Errors
+
+Invalid input returns 400 with the invalid field(s) listed:
+
+```json
+{ "error": "Invalid query parameters", "fields": { "limit": "Too big: expected number to be <=50" } }
+```
+
+```json
+{ "error": "Invalid car id", "fields": { "id": "Invalid input: expected number, received NaN" } }
+```
