@@ -209,6 +209,94 @@ Without a valid session:
 { "error": "Unauthorized" }
 ```
 
+## Admin car management
+
+All routes start with `/api/admin/cars` and require an admin session
+(no cookie -> `401 {"error":"Unauthorized"}`).
+
+Admin car objects use the public shape PLUS the internal fields
+`featuredOrder`, `createdAt` and `updatedAt`.
+
+### GET /api/admin/cars
+
+Query params: `page` (default 1), `limit` (default 20, max 100).
+Lists ALL cars, including unavailable ones. Same `{ data, page, totalPages }`
+shape as the public list.
+
+### GET /api/admin/cars/:id
+
+One car with admin fields. Unknown id -> `404 {"error":"Car not found"}`.
+
+### POST /api/admin/cars
+
+Create a car -> `201` with the created car (admin shape).
+
+Required: `name` (2-100 chars), `brand` (2-50), `type`
+(`sedan`|`suv`|`hatchback`|`van`|`luxury`|`pickup`), `seats` (1-20),
+`transmission` (`manual`|`automatic`), `fuel`
+(`petrol`|`diesel`|`hybrid`|`electric`|`cng`), `pricePerDay` (0-1000000).
+
+Optional: `currency` (3 uppercase letters, default `"PKR"`), `images`
+(max 10, each must start with `https://`, default `[]`), `description`
+(max 2000 chars), `isAvailable` (default `true`).
+(There is no `isFeatured` here - featuring is a separate PATCH below.)
+
+Example request:
+
+```json
+{
+  "name": "Isuzu D-Max",
+  "brand": "Isuzu",
+  "type": "pickup",
+  "seats": 5,
+  "transmission": "manual",
+  "fuel": "diesel",
+  "pricePerDay": 12000,
+  "currency": "PKR",
+  "images": ["https://placehold.co/800x500?text=Isuzu+D-Max"],
+  "description": "Tough work pickup",
+  "isAvailable": true
+}
+```
+
+### PUT /api/admin/cars/:id
+
+Partial update: only the fields you send change, validated with the same
+rules as create. **Unknown fields (id, created_at, ...) are rejected:**
+
+```json
+{ "error": "Validation failed", "fields": { "id": "Unrecognized keys: \"id\"", "bogus": "Unrecognized keys: \"bogus\"" } }
+```
+
+### PATCH /api/admin/cars/:id/price
+
+```json
+{ "pricePerDay": 9500 }
+```
+
+`pricePerDay` must be a number 0-1000000.
+
+### PATCH /api/admin/cars/:id/featured
+
+```json
+{ "isFeatured": true, "featuredOrder": 2 }
+```
+
+`featuredOrder` is optional (integer 1-100). Setting `isFeatured: false`
+always clears `featuredOrder`.
+Note: featured cars without an order sort first (PostgreSQL puts NULL first).
+
+### DELETE /api/admin/cars/:id
+
+```json
+{ "ok": true }
+```
+
+Unknown id -> `404 {"error":"Car not found"}`.
+Enquiries linked to the car are kept; the database sets their `car_id` to NULL.
+
+All invalid input -> `400 {"error":"Validation failed","fields":{...}}`.
+
 ## Errors
 
 Invalid input returns 400 with the invalid field(s) listed:
