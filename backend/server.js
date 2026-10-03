@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -17,8 +19,15 @@ const app = express();
 // rate limiting sees the real client IP instead of the proxy's.
 app.set('trust proxy', 1);
 
-// Basic security headers for every response
-app.use(helmet());
+// Basic security headers for every response. Car photos come from
+// Cloudinary (or any https URL an admin pastes), so allow https images.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: { 'img-src': ["'self'", 'data:', 'https:'] },
+    },
+  })
+);
 
 // Only allow requests coming from your frontend
 app.use(cors({ origin: env.frontendUrl, credentials: true }));
@@ -38,6 +47,17 @@ app.use('/api', apiLimiter);
 
 // All /api routes live in src/routes
 app.use('/api', apiRoutes);
+
+// In production the built frontend (frontend/dist) is served from this same
+// server, so the admin cookie stays same-origin. Any non-API page request
+// gets index.html and React Router takes over.
+const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist, { index: false }));
+  app.get(/^\/(?!api\/).*/, (req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
 
 // Anything not matched above gets a 404, and errors get handled in one place
 app.use(notFound);
