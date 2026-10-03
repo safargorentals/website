@@ -108,6 +108,56 @@ One car by id. `:id` must be a positive integer.
 { "error": "Car not found" }
 ```
 
+## Enquiries
+
+### POST /api/enquiries
+
+Submit a rental enquiry. No login needed.
+
+- Rate limited to **5 per hour per IP** - more than that returns 429.
+- The JSON body must be at most **10 KB**.
+
+Required: `name`, `phone`, `pickupLocation`, `dropoffLocation`, `startDate`, `endDate`, `pickupTime`, `dropoffTime`.
+Optional: `email`, `carId` (must be an existing car), `message` (max 1000 chars).
+`website` is a hidden honeypot field - always send it as an empty string.
+
+Example request:
+
+```json
+{
+  "name": "Ali Raza",
+  "phone": "+92 300 1234567",
+  "email": "ali@example.com",
+  "carId": 1,
+  "pickupLocation": "Lahore",
+  "dropoffLocation": "Islamabad",
+  "startDate": "2026-10-10",
+  "endDate": "2026-10-13",
+  "pickupTime": "10:00",
+  "dropoffTime": "18:00",
+  "message": "Need a car for a family trip",
+  "website": ""
+}
+```
+
+Success -> 201
+
+```json
+{ "id": 42, "message": "Enquiry received" }
+```
+
+Invalid input -> 400, with the invalid field(s) listed:
+
+```json
+{ "error": "Validation failed", "fields": { "phone": "Phone may only contain digits, spaces and + - ( )" } }
+```
+
+Too many submissions in an hour -> 429
+
+```json
+{ "error": "Too many enquiries. Please try again in an hour." }
+```
+
 ## Errors
 
 Invalid input returns 400 with the invalid field(s) listed:

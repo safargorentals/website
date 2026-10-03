@@ -13,14 +13,18 @@ const errorHandler = require('./src/middleware/errorHandler');
 
 const app = express();
 
+// Render puts our app behind a proxy. Trust one hop so that
+// rate limiting sees the real client IP instead of the proxy's.
+app.set('trust proxy', 1);
+
 // Basic security headers for every response
 app.use(helmet());
 
 // Only allow requests coming from your frontend
 app.use(cors({ origin: env.frontendUrl, credentials: true }));
 
-// Read request bodies sent as JSON and as cookies
-app.use(express.json());
+// Read request bodies sent as JSON (max 10 KB) and as cookies
+app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
 // Limit how many API requests a client can make (100 per 15 minutes)
