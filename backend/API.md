@@ -158,6 +158,57 @@ Too many submissions in an hour -> 429
 { "error": "Too many enquiries. Please try again in an hour." }
 ```
 
+## Admin authentication
+
+The admin session lives in an `httpOnly` cookie named `admin_token`
+(a JWT inside, valid 8 hours). The token is **never** returned in a
+JSON body. Cookie settings (`secure`, `sameSite`) come from the
+environment: `COOKIE_SECURE`, `COOKIE_SAME_SITE`.
+
+### Create the first admin
+
+```bash
+npm run admin:create
+```
+
+Asks for an email and a password in the terminal (the password is typed
+hidden and must be at least 12 characters). Refuses duplicate emails.
+
+### POST /api/admin/login
+
+```json
+{ "email": "admin@safargo.test", "password": "your-password" }
+```
+
+- `200` -> `{ "ok": true }` (plus the `admin_token` cookie, httpOnly)
+- `400` -> validation (bad email, empty or >200 char password)
+- `401` -> `{ "error": "Invalid email or password" }` - the same message
+  for unknown email and wrong password, and with identical timing
+- `429` -> after 5 failed attempts in 15 minutes:
+  `{ "error": "Too many login attempts. Please try again in 15 minutes." }`
+
+### POST /api/admin/logout
+
+Requires a valid session. Clears the `admin_token` cookie.
+
+```json
+{ "ok": true }
+```
+
+### GET /api/admin/me
+
+Requires a valid session.
+
+```json
+{ "ok": true, "email": "admin@safargo.test" }
+```
+
+Without a valid session:
+
+```json
+{ "error": "Unauthorized" }
+```
+
 ## Errors
 
 Invalid input returns 400 with the invalid field(s) listed:
