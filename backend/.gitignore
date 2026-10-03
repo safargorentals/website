@@ -1,0 +1,5 @@
+# Dependencies (installed with npm)
+node_modules
+
+# Environment variables - never commit real secrets
+.env
