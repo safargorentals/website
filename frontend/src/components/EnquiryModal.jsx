@@ -1,13 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createEnquiry } from '../api.js'
-import { typeLabel } from '../constants.js'
-
-function todayString() {
-  const t = new Date()
-  const mm = String(t.getMonth() + 1).padStart(2, '0')
-  const dd = String(t.getDate()).padStart(2, '0')
-  return `${t.getFullYear()}-${mm}-${dd}`
-}
+import { formatPrice, rentalDays, todayString, typeImage, typeLabel } from '../constants.js'
 
 const EMPTY = {
   name: '',
@@ -54,8 +47,23 @@ function mapServerErrors(fields) {
   return e
 }
 
-export default function EnquiryModal({ car, onClose }) {
-  const [form, setForm] = useState(EMPTY)
+// Pre-fill from the hero search, if the visitor used it
+function initialForm(trip) {
+  if (!trip) return EMPTY
+  const pick = (k) => trip[k] || EMPTY[k]
+  return {
+    ...EMPTY,
+    pickupLocation: pick('pickupLocation'),
+    dropoffLocation: pick('dropoffLocation'),
+    startDate: pick('startDate'),
+    endDate: pick('endDate'),
+    pickupTime: pick('pickupTime'),
+    dropoffTime: pick('dropoffTime'),
+  }
+}
+
+export default function EnquiryModal({ car, trip, onClose }) {
+  const [form, setForm] = useState(() => initialForm(trip))
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
@@ -101,6 +109,8 @@ export default function EnquiryModal({ car, onClose }) {
     }
   }
 
+  const days = rentalDays(form)
+
   const field = (key, label, props = {}, required = false) => (
     <label className={`field ${errors[key] ? 'field--error' : ''}`}>
       <span>
@@ -123,24 +133,29 @@ export default function EnquiryModal({ car, onClose }) {
           <div className="modal__success">
             <div className="success-icon">✓</div>
             <h2>Thank you!</h2>
-            <p>We've received your enquiry for the {car.name}. We'll call you shortly.</p>
+            <p>We've received your enquiry for the {car.name}. We'll call you shortly to confirm the booking.</p>
             <button className="btn btn--primary" onClick={onClose}>
               Done
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} noValidate>
-            <h2 id="enquiry-title">Booking enquiry</h2>
+            <h2 id="enquiry-title">Book your car</h2>
 
-            <div className="grid-2">
-              <label className="field">
-                <span>Car</span>
-                <input value={car.name} readOnly />
-              </label>
-              <label className="field">
-                <span>Car type</span>
-                <input value={typeLabel(car.type)} readOnly />
-              </label>
+            <div className="booking-car">
+              <img src={car.images?.[0] || typeImage(car.type)} alt="" />
+              <div>
+                <strong>{car.name}</strong>
+                <span>
+                  {typeLabel(car.type)} · {formatPrice(car.pricePerDay, car.currency)}/day
+                </span>
+                {days > 0 && (
+                  <span className="booking-car__total">
+                    Estimated {formatPrice(car.pricePerDay * days, car.currency)} for {days}{' '}
+                    {days === 1 ? 'day' : 'days'}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="grid-2">
@@ -178,7 +193,7 @@ export default function EnquiryModal({ car, onClose }) {
             {errors.form && <p className="alert alert--error">{errors.form}</p>}
 
             <button className="btn btn--primary btn--block" disabled={submitting}>
-              {submitting ? 'Sending…' : 'Submit enquiry'}
+              {submitting ? 'Sending…' : 'Send booking request'}
             </button>
           </form>
         )}

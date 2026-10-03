@@ -16,6 +16,9 @@ const env = {
   databaseUrl: process.env.DATABASE_URL,
   jwtSecret: process.env.JWT_SECRET,
   frontendUrl: process.env.FRONTEND_URL,
+  // How many proxies sit in front of the app. 1 = Render only; 2 when the
+  // frontend host (e.g. Netlify) also proxies /api to us.
+  trustProxyHops: Number(process.env.TRUST_PROXY_HOPS) || 1,
   // Cloudinary image uploads (admin only). Read from the environment,
   // never hardcoded anywhere.
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,

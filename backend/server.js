@@ -15,9 +15,10 @@ const errorHandler = require('./src/middleware/errorHandler');
 
 const app = express();
 
-// Render puts our app behind a proxy. Trust one hop so that
-// rate limiting sees the real client IP instead of the proxy's.
-app.set('trust proxy', 1);
+// Render puts our app behind a proxy (and Netlify adds another when it
+// proxies /api). Trust exactly that many hops so rate limiting sees the
+// real client IP instead of a proxy's.
+app.set('trust proxy', env.trustProxyHops);
 
 // Basic security headers for every response. Car photos come from
 // Cloudinary (or any https URL an admin pastes), so allow https images.
