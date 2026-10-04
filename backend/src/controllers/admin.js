@@ -45,9 +45,10 @@ async function login(req, res, next) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Sign a JWT holding ONLY the admin id, valid for 8 hours,
-    // and send it as an httpOnly cookie - never in the JSON body.
-    const token = jwt.sign({ id: admin.id }, env.jwtSecret, {
+    // Sign a JWT holding ONLY the admin id and session version, valid for
+    // 8 hours, and send it as an httpOnly cookie - never in the JSON body.
+    const token = jwt.sign({ id: admin.id, v: admin.token_version }, env.jwtSecret, {
+      algorithm: env.jwtAlgorithm,
       expiresIn: env.tokenTtlSeconds,
     });
     res.cookie(env.cookieOptions.name, token, env.cookieOptions);
@@ -58,9 +59,17 @@ async function login(req, res, next) {
 }
 
 // POST /api/admin/logout (requires a valid session)
-function logout(req, res) {
-  res.clearCookie(env.cookieOptions.name, env.cookieOptions);
-  res.json({ ok: true });
+// Bumps the session version, so this token - and any copy of it - stops
+// working on the server, not just in this browser.
+async function logout(req, res, next) {
+  try {
+    await adminsModel.bumpTokenVersion(req.admin.id);
+    const { maxAge, ...clearOptions } = env.cookieOptions;
+    res.clearCookie(env.cookieOptions.name, clearOptions);
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
 }
 
 // GET /api/admin/me (requires a valid session)

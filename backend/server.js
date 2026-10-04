@@ -6,11 +6,13 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const rateLimit = require('express-rate-limit');
 
 const env = require('./src/config/env');
 const apiRoutes = require('./src/routes');
 const requestLogger = require('./src/middleware/requestLogger');
+const netlifyProxyGuard = require('./src/middleware/netlifyProxyGuard');
+const adminRequestGuard = require('./src/middleware/adminRequestGuard');
+const { publicLimiter, adminLimiter, connectionLimiter } = require('./src/middleware/apiLimiter');
 const notFound = require('./src/middleware/notFound');
 const errorHandler = require('./src/middleware/errorHandler');
 
@@ -52,7 +54,7 @@ app.use(
     origin: corsOrigin,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
+    allowedHeaders: ['Content-Type', 'X-Requested-With'],
   })
 );
 
@@ -60,14 +62,20 @@ app.use(
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
-// Limit how many API requests a client can make (100 per 15 minutes)
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 100,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-});
-app.use('/api', apiLimiter);
+// Only serve requests that came through our Netlify site (once
+// NETLIFY_PROXY_SECRET is set - see the middleware)
+app.use('/api', netlifyProxyGuard);
+
+// Rate limits (see src/middleware/apiLimiter.js): a hard cap per connecting
+// address, then a budget per visitor - one for public pages, a larger one
+// for the admin panel. Login, enquiries and uploads have stricter limits
+// of their own on their routes.
+app.use('/api', connectionLimiter);
+app.use('/api', publicLimiter);
+app.use('/api/admin', adminLimiter);
+
+// Admin responses are never cached, and admin changes need the CSRF header
+app.use('/api/admin', adminRequestGuard);
 
 // All /api routes live in src/routes
 app.use('/api', apiRoutes);

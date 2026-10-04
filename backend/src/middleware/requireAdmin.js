@@ -3,8 +3,9 @@ const env = require('../config/env');
 const adminsModel = require('../models/admins');
 
 // Protects every /api/admin/* route except /login.
-// A request passes only if it carries a valid, unexpired admin_token cookie
-// AND the admin that id points to still exists in the database.
+// A request passes only if it carries a valid, unexpired admin_token cookie,
+// the admin that id points to still exists in the database, AND the token's
+// session version matches (logout / password change bump it).
 // On any failure it answers 401 - and never says which step failed.
 async function requireAdmin(req, res, next) {
   try {
@@ -15,19 +16,24 @@ async function requireAdmin(req, res, next) {
 
     let payload;
     try {
-      payload = jwt.verify(token, env.jwtSecret);
+      payload = jwt.verify(token, env.jwtSecret, { algorithms: [env.jwtAlgorithm] });
     } catch (err) {
       // Bad signature, expired, or malformed - all the same to the client
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    if (!payload || typeof payload !== 'object' || !Number.isInteger(payload.id)) {
+    if (
+      !payload ||
+      typeof payload !== 'object' ||
+      !Number.isInteger(payload.id) ||
+      !Number.isInteger(payload.v)
+    ) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // The admin must still exist (the account may have been deleted)
     const admin = await adminsModel.getAdminById(payload.id);
-    if (!admin) {
+    if (!admin || admin.token_version !== payload.v) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 

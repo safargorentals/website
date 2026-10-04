@@ -166,6 +166,10 @@ export default function Home() {
     load(type, 1)
   }, [type, load])
 
+  useEffect(() => {
+    document.title = 'Drive Kochi | Self-drive car rental in Kochi'
+  }, [])
+
   // Featured cars are a nice-to-have; if the request fails the section just stays hidden.
   useEffect(() => {
     getFeaturedCars()

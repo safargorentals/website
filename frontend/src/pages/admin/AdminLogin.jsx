@@ -1,19 +1,39 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { adminLogin, adminMe } from '../../api.js'
+
+// Why the visitor landed here (set by useAdminSession / logout)
+const NOTICES = {
+  signedOut: 'You have been logged out.',
+  expired: 'Your session has ended. Please log in again.',
+  required: 'Please log in to continue.',
+}
 
 export default function AdminLogin() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const notice = NOTICES[location.state?.reason]
+  const [checking, setChecking] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // Already signed in? Go straight to the dashboard.
   useEffect(() => {
+    document.title = 'Admin login · Drive Kochi'
+  }, [])
+
+  // Already logged in? Go straight to the dashboard, replacing this page in
+  // history so Back does not return to the login form. The form stays
+  // hidden until the check finishes, so it never flashes up first.
+  useEffect(() => {
+    let active = true
     adminMe()
-      .then(() => navigate('/admin/dashboard', { replace: true }))
-      .catch(() => {})
+      .then(() => active && navigate('/admin/dashboard', { replace: true }))
+      .catch(() => active && setChecking(false))
+    return () => {
+      active = false
+    }
   }, [navigate])
 
   async function handleSubmit(e) {
@@ -22,13 +42,16 @@ export default function AdminLogin() {
     setSubmitting(true)
     try {
       await adminLogin(email.trim(), password)
+      setPassword('')
+      // replace: the login page is not kept in history behind the dashboard
       navigate('/admin/dashboard', { replace: true })
     } catch (err) {
       setError(err.fields?.email || err.fields?.password || err.message)
-    } finally {
       setSubmitting(false)
     }
   }
+
+  if (checking) return <div className="page-loading">Loading…</div>
 
   return (
     <div className="login-page">
@@ -38,9 +61,18 @@ export default function AdminLogin() {
         </a>
         <h1>Admin login</h1>
 
+        {notice && !error && <p className="alert alert--info">{notice}</p>}
+
         <label className="field">
           <span>Email</span>
-          <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input
+            type="email"
+            autoComplete="username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoFocus
+          />
         </label>
         <label className="field">
           <span>Password</span>
@@ -56,7 +88,7 @@ export default function AdminLogin() {
         {error && <p className="alert alert--error">{error}</p>}
 
         <button className="btn btn--primary btn--block" disabled={submitting}>
-          {submitting ? 'Signing in…' : 'Sign in'}
+          {submitting ? 'Logging in…' : 'Log in'}
         </button>
       </form>
     </div>

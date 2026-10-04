@@ -11,7 +11,17 @@ export class ApiError extends Error {
 }
 
 async function request(path, { method = 'GET', body, form } = {}) {
-  const opts = { method, credentials: 'include', headers: {} }
+  // X-Requested-With marks the request as coming from this site's own code;
+  // the API refuses admin changes without it (cross-site request forgery
+  // protection, see backend/src/middleware/adminRequestGuard.js).
+  // cache: 'no-store' keeps API answers (especially admin data) out of the
+  // browser cache.
+  const opts = {
+    method,
+    credentials: 'include',
+    cache: 'no-store',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+  }
   if (form) {
     opts.body = form
   } else if (body !== undefined) {

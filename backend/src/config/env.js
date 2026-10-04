@@ -38,7 +38,15 @@ const env = {
   notifyEmailFrom: process.env.NOTIFY_EMAIL_FROM,
   // Base URL of the admin panel, used to link new enquiries in the email
   adminUrl: process.env.ADMIN_URL,
+  // Shared secret for Netlify "signed proxy redirects". When set, every API
+  // request must carry Netlify's x-nf-sign header signed with it, so the
+  // Render URL cannot be called directly (bypassing Netlify and faking
+  // client IPs). Must equal the site's API_SIGNATURE_TOKEN on Netlify.
+  netlifyProxySecret: process.env.NETLIFY_PROXY_SECRET,
 };
+
+// Admin JWTs are always HMAC-SHA256; verification accepts nothing else.
+env.jwtAlgorithm = 'HS256';
 
 // Admin session cookie settings, driven by the environment so they can be
 // adjusted at deployment time.

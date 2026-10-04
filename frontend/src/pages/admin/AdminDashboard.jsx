@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { adminLogout, adminMe } from '../../api.js'
+import { useEffect, useState } from 'react'
+import { adminLogout } from '../../api.js'
 import CarsTab from './CarsTab.jsx'
 import CarTypesTab from './CarTypesTab.jsx'
 import EnquiriesTab from './EnquiriesTab.jsx'
+import { announceLogout, useAdminSession } from './session.js'
 
 const TABS = [
   { key: 'cars', label: 'Cars' },
@@ -12,22 +12,20 @@ const TABS = [
 ]
 
 export default function AdminDashboard() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState(null)
+  const { email, onUnauthorized, leave } = useAdminSession()
   const [tab, setTab] = useState('cars')
+  const [loggingOut, setLoggingOut] = useState(false)
 
   useEffect(() => {
-    adminMe()
-      .then((res) => setEmail(res.email))
-      .catch(() => navigate('/admin', { replace: true }))
-  }, [navigate])
-
-  // Any 401 from a child tab means the session expired
-  const onUnauthorized = useCallback(() => navigate('/admin', { replace: true }), [navigate])
+    document.title = 'Admin · Drive Kochi'
+  }, [])
 
   async function logout() {
+    setLoggingOut(true)
+    // Even if the request fails (e.g. offline), leave the dashboard
     await adminLogout().catch(() => {})
-    navigate('/admin', { replace: true })
+    announceLogout()
+    leave('signedOut')
   }
 
   if (!email) return <div className="page-loading">Loading…</div>
@@ -41,8 +39,8 @@ export default function AdminDashboard() {
           </a>
           <div className="admin__user">
             <span>{email}</span>
-            <button className="btn btn--ghost btn--sm" onClick={logout}>
-              Log out
+            <button className="btn btn--ghost btn--sm" onClick={logout} disabled={loggingOut}>
+              {loggingOut ? 'Logging out…' : 'Log out'}
             </button>
           </div>
         </div>

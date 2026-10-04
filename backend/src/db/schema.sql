@@ -81,6 +81,11 @@ CREATE INDEX IF NOT EXISTS idx_cars_type ON cars (type);
 CREATE INDEX IF NOT EXISTS idx_enquiries_status ON enquiries (status);
 CREATE INDEX IF NOT EXISTS idx_enquiries_created_at ON enquiries (created_at);
 
+-- Session version: every admin JWT carries it, and logging out or changing
+-- the password bumps it, so older tokens stop working immediately (a stolen
+-- cookie dies at logout instead of living for the full 8 hours).
+ALTER TABLE admins ADD COLUMN IF NOT EXISTS token_version INT NOT NULL DEFAULT 0;
+
 -- Prices are in Indian rupees. Tables created before this change had a
 -- 'PKR' default; this keeps them in line (safe to run repeatedly).
 ALTER TABLE cars ALTER COLUMN currency SET DEFAULT 'INR';

@@ -527,6 +527,34 @@ With `NODE_ENV=production` every request logs one line:
 Request bodies, cookies, headers and query strings are never logged.
 Development logs nothing.
 
+## Security rules for API clients
+
+- Every admin request that changes something (POST, PUT, PATCH, DELETE,
+  including login and logout) must send the header
+  `X-Requested-With: XMLHttpRequest`, or it gets `403`. This blocks
+  cross-site request forgery; the website's fetch helper adds it.
+- Admin responses carry `Cache-Control: no-store`.
+- Logout ends the session on the server: the old cookie stops working
+  everywhere, not just in that browser. Changing the password does the same.
+- When `NETLIFY_PROXY_SECRET` is set, only requests forwarded (and signed)
+  by the Netlify site are answered; everything else gets `403` except
+  `GET /api/health`.
+
+### Rate limits (per 15 minutes unless noted)
+
+| What | Limit | Counted per |
+| --- | --- | --- |
+| Public API | 300 requests | visitor IP |
+| Admin API | 600 requests | visitor IP |
+| Whole API | 3000 requests | connecting address (cannot be faked) |
+| Failed logins | 5 | visitor IP |
+| Failed logins | 30 | connecting address |
+| Failed logins | 10 per hour | account email |
+| Enquiries | 5 per hour | visitor IP |
+| Image uploads | 30 | visitor IP |
+
+Over a limit -> `429` with `{ "error": "..." }`.
+
 ## Errors
 
 Invalid input returns 400 with the invalid field(s) listed:

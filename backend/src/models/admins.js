@@ -10,7 +10,7 @@ function getPool() {
 // Find an admin by email (including the hash, used only by login).
 async function getAdminByEmail(email) {
   const { rows } = await getPool().query(
-    'SELECT id, email, password_hash FROM admins WHERE email = $1',
+    'SELECT id, email, password_hash, token_version FROM admins WHERE email = $1',
     [email]
   );
   return rows[0] || null;
@@ -18,7 +18,10 @@ async function getAdminByEmail(email) {
 
 // Find an admin by id (used to re-check a session against the database).
 async function getAdminById(id) {
-  const { rows } = await getPool().query('SELECT id, email FROM admins WHERE id = $1', [id]);
+  const { rows } = await getPool().query(
+    'SELECT id, email, token_version FROM admins WHERE id = $1',
+    [id]
+  );
   return rows[0] || null;
 }
 
@@ -31,13 +34,20 @@ async function createAdmin(email, passwordHash) {
   return rows[0];
 }
 
-// Replace an admin's password hash. Returns true when a row was updated.
+// Replace an admin's password hash and end all of that admin's sessions.
+// Returns true when a row was updated.
 async function updateAdminPassword(id, passwordHash) {
   const { rowCount } = await getPool().query(
-    'UPDATE admins SET password_hash = $1 WHERE id = $2',
+    'UPDATE admins SET password_hash = $1, token_version = token_version + 1 WHERE id = $2',
     [passwordHash, id]
   );
   return rowCount > 0;
 }
 
-module.exports = { getAdminByEmail, getAdminById, createAdmin, updateAdminPassword };
+// End every session of this admin (all browsers): tokens carrying the old
+// version are rejected by requireAdmin from now on.
+async function bumpTokenVersion(id) {
+  await getPool().query('UPDATE admins SET token_version = token_version + 1 WHERE id = $1', [id]);
+}
+
+module.exports = { getAdminByEmail, getAdminById, createAdmin, updateAdminPassword, bumpTokenVersion };
