@@ -22,12 +22,38 @@ export function announceLogout() {
 // Re-check at most this often when the tab regains focus
 const RECHECK_MS = 30 * 1000
 
-// The server sets this readable cookie next to the session cookie (it
-// grants nothing; it only says an admin logged in on this browser)
+// Markers that an admin is logged in here. They grant nothing - the
+// website only uses them to decide whether to ask the API and redirect:
+// - admin_hint: readable cookie the server sets next to the session cookie
+//   (whole browser)
+// - a sessionStorage flag the dashboard sets when it opens (this tab), so
+//   the redirect also works for sessions started before admin_hint existed
 const HINT = 'admin_hint'
-export const hasAdminHint = () => document.cookie.split('; ').some((c) => c === `${HINT}=1`)
+const TAB_FLAG = 'drive-kochi-admin-active'
+
+function readTabFlag() {
+  try {
+    return sessionStorage.getItem(TAB_FLAG) === '1'
+  } catch {
+    return false
+  }
+}
+
+function setTabFlag(on) {
+  try {
+    if (on) sessionStorage.setItem(TAB_FLAG, '1')
+    else sessionStorage.removeItem(TAB_FLAG)
+  } catch {
+    // Storage blocked (private mode): the cookie hint still works
+  }
+}
+
+export const hasAdminHint = () =>
+  document.cookie.split('; ').some((c) => c === `${HINT}=1`) || readTabFlag()
+
 const clearAdminHint = () => {
   document.cookie = `${HINT}=; Max-Age=0; Path=/; SameSite=Strict`
+  setTabFlag(false)
 }
 
 // For public pages: if an admin is logged in on this browser, go to the
@@ -77,6 +103,7 @@ export function useAdminSession() {
       if (ending.current) return
       ending.current = true
       setEmail(null)
+      clearAdminHint()
       await adminLogout().catch(() => {})
       announceLogout()
       if (then) then()
@@ -91,7 +118,10 @@ export function useAdminSession() {
     (reason = 'expired') => {
       lastCheck.current = Date.now()
       return adminMe()
-        .then((res) => setEmail(res.email))
+        .then((res) => {
+          setTabFlag(true)
+          setEmail(res.email)
+        })
         .catch(() => {
         clearAdminHint()
         leave(reason)
@@ -103,21 +133,31 @@ export function useAdminSession() {
   useEffect(() => {
     check('required')
 
-    // Back button: an extra history entry means Back lands here, on the
-    // dashboard, and is put straight back - so Back does nothing. If a
-    // browser skips that entry anyway, the page it reaches (website or login)
-    // sends a logged-in admin back to the dashboard.
-    window.history.pushState(window.history.state, '', window.location.href)
-    const onPopState = () => {
-      if (!ending.current) window.history.pushState(window.history.state, '', window.location.href)
+    // Back button: a guard entry sits on top of the dashboard in history, so
+    // Back only pops the guard and stays here; it is then put back. Chrome
+    // ignores history entries added before the user touched the page, so
+    // the guard is also re-added on every click or key press (those count
+    // as user actions). If Back still gets through, the page it reaches
+    // (website or login) sends a logged-in admin straight back here.
+    const arm = () => {
+      if (ending.current || window.history.state?.dkGuard) return
+      window.history.pushState({ ...window.history.state, dkGuard: true }, '', window.location.href)
     }
+    arm()
+    const onPopState = () => arm()
+    document.addEventListener('pointerdown', arm, true)
+    document.addEventListener('keydown', arm, true)
 
     // Restored from the back/forward cache: make sure the session is alive
     const onPageShow = (e) => e.persisted && check('required')
     const onVisible = () => {
       if (document.visibilityState === 'visible' && Date.now() - lastCheck.current > RECHECK_MS) check()
     }
-    const onMessage = (e) => e.data === 'logout' && leave('signedOut')
+    const onMessage = (e) => {
+      if (e.data !== 'logout') return
+      setTabFlag(false)
+      leave('signedOut')
+    }
 
     window.addEventListener('popstate', onPopState)
     window.addEventListener('pageshow', onPageShow)
@@ -125,6 +165,8 @@ export function useAdminSession() {
     channel?.addEventListener('message', onMessage)
     return () => {
       window.removeEventListener('popstate', onPopState)
+      document.removeEventListener('pointerdown', arm, true)
+      document.removeEventListener('keydown', arm, true)
       window.removeEventListener('pageshow', onPageShow)
       document.removeEventListener('visibilitychange', onVisible)
       channel?.removeEventListener('message', onMessage)
