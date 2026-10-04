@@ -65,7 +65,8 @@ env.cookieOptions = {
   httpOnly: true,
   secure: env.cookieSecure,
   sameSite: env.cookieSameSite,
-  maxAge: env.tokenTtlSeconds * 1000,
+  // No maxAge: a browser-session cookie, gone when the browser is closed.
+  // The JWT inside still expires after tokenTtlSeconds (8 hours).
   path: '/',
 };
 

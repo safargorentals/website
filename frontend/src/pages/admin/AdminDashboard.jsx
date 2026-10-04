@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { adminLogout } from '../../api.js'
 import CarsTab from './CarsTab.jsx'
 import CarTypesTab from './CarTypesTab.jsx'
 import EnquiriesTab from './EnquiriesTab.jsx'
-import { announceLogout, useAdminSession } from './session.js'
+import { useAdminSession } from './session.js'
 
 const TABS = [
   { key: 'cars', label: 'Cars' },
@@ -12,7 +11,7 @@ const TABS = [
 ]
 
 export default function AdminDashboard() {
-  const { email, onUnauthorized, leave } = useAdminSession()
+  const { email, onUnauthorized, endSession } = useAdminSession()
   const [tab, setTab] = useState('cars')
   const [loggingOut, setLoggingOut] = useState(false)
 
@@ -20,12 +19,15 @@ export default function AdminDashboard() {
     document.title = 'Admin · Drive Kochi'
   }, [])
 
-  async function logout() {
+  function logout() {
     setLoggingOut(true)
-    // Even if the request fails (e.g. offline), leave the dashboard
-    await adminLogout().catch(() => {})
-    announceLogout()
-    leave('signedOut')
+    endSession()
+  }
+
+  // Leaving the admin for the website also logs out
+  function goToWebsite(e) {
+    e.preventDefault()
+    endSession(() => window.location.assign('/'))
   }
 
   if (!email) return <div className="page-loading">Loading…</div>
@@ -34,7 +36,7 @@ export default function AdminDashboard() {
     <div className="admin">
       <header className="admin__header">
         <div className="container admin__header-inner">
-          <a href="/" className="logo">
+          <a href="/" className="logo" onClick={goToWebsite} title="Log out and open the website">
             Drive<span>Kochi</span> <small>Admin</small>
           </a>
           <div className="admin__user">

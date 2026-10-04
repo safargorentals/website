@@ -64,8 +64,7 @@ async function login(req, res, next) {
 async function logout(req, res, next) {
   try {
     await adminsModel.bumpTokenVersion(req.admin.id);
-    const { maxAge, ...clearOptions } = env.cookieOptions;
-    res.clearCookie(env.cookieOptions.name, clearOptions);
+    res.clearCookie(env.cookieOptions.name, env.cookieOptions);
     res.json({ ok: true });
   } catch (err) {
     next(err);
