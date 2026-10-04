@@ -1,9 +1,9 @@
 {
   "name": "safargo",
   "private": true,
-  "description": "Builds the frontend and runs the backend, which serves it (used by Render).",
+  "description": "Render runs the API only; the website is hosted on Netlify (see frontend/netlify.toml).",
   "scripts": {
-    "build": "npm --prefix frontend ci && npm --prefix frontend run build && npm --prefix backend ci --omit=dev",
+    "build": "npm --prefix backend ci --omit=dev",
     "start": "npm --prefix backend run db:init && npm --prefix backend start"
   }
 }

@@ -49,11 +49,15 @@ app.use('/api', apiLimiter);
 // All /api routes live in src/routes
 app.use('/api', apiRoutes);
 
-// In production the built frontend (frontend/dist) is served from this same
-// server, so the admin cookie stays same-origin. Any non-API page request
-// gets index.html and React Router takes over.
+// The website is hosted on Netlify, which proxies /api here, so on Render this
+// is an API-only service. If frontend/dist has been built locally it is still
+// served (handy for testing the production build on one port).
 const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
-if (fs.existsSync(frontendDist)) {
+if (!fs.existsSync(frontendDist)) {
+  app.get('/', (req, res) => {
+    res.json({ name: 'SafarGo API', ok: true, health: '/api/health' });
+  });
+} else {
   app.use(express.static(frontendDist, { index: false }));
   app.get(/^\/(?!api\/).*/, (req, res) => {
     res.sendFile(path.join(frontendDist, 'index.html'));
