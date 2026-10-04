@@ -31,4 +31,13 @@ async function createAdmin(email, passwordHash) {
   return rows[0];
 }
 
-module.exports = { getAdminByEmail, getAdminById, createAdmin };
+// Replace an admin's password hash. Returns true when a row was updated.
+async function updateAdminPassword(id, passwordHash) {
+  const { rowCount } = await getPool().query(
+    'UPDATE admins SET password_hash = $1 WHERE id = $2',
+    [passwordHash, id]
+  );
+  return rowCount > 0;
+}
+
+module.exports = { getAdminByEmail, getAdminById, createAdmin, updateAdminPassword };

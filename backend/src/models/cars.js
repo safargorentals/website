@@ -142,6 +142,21 @@ async function deleteCar(id) {
   return rowCount > 0;
 }
 
+// Counts for the admin dashboard: total cars, how many are available and
+// how many are featured. No user input is involved, so there is nothing
+// to parameterize.
+async function getCarStats() {
+  const { rows } = await getPool().query(
+    `SELECT
+       COUNT(*)::int AS total,
+       COUNT(*) FILTER (WHERE is_available = TRUE)::int AS available,
+       COUNT(*) FILTER (WHERE is_featured = TRUE)::int AS featured
+     FROM cars`
+  );
+  const row = rows[0];
+  return { total: row.total, available: row.available, featured: row.featured };
+}
+
 module.exports = {
   getAllCars,
   getFeaturedCars,
@@ -151,4 +166,5 @@ module.exports = {
   updatePrice,
   setFeatured,
   deleteCar,
+  getCarStats,
 };

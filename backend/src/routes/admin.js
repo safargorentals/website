@@ -11,5 +11,7 @@ router.post('/login', loginLimiter, adminController.login);
 // Everything else needs a valid admin session (requireAdmin).
 router.post('/logout', requireAdmin, adminController.logout);
 router.get('/me', requireAdmin, adminController.me);
+// Dashboard numbers; its own path, no clash with /cars, /uploads, /enquiries
+router.get('/stats', requireAdmin, adminController.stats);
 
 module.exports = router;
