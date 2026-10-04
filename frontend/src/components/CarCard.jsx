@@ -1,17 +1,19 @@
-import { capitalize, formatPrice, typeImage, typeLabel } from '../constants.js'
+import useCarTypes from '../carTypes.js'
+import { capitalize, formatPrice } from '../constants.js'
 import Icon from './Icon.jsx'
 
 // A car shown as a travel ticket: photo on top, specs, then a tear-off stub
 // with the price and the booking button.
 export default function CarCard({ car, days = 0, onBook }) {
+  const carTypes = useCarTypes()
   const ownImage = car.images?.[0]
   const fuel = car.fuel === 'cng' ? 'CNG' : capitalize(car.fuel)
 
   return (
     <article className={`sg-ticket ${car.isAvailable ? '' : 'is-off'}`}>
       <div className="sg-ticket__media">
-        <img src={ownImage || typeImage(car.type)} alt={car.name} loading="lazy" />
-        <span className="sg-ticket__type">{typeLabel(car.type)}</span>
+        <img src={ownImage || carTypes.image(car.type)} alt={car.name} loading="lazy" />
+        <span className="sg-ticket__type">{carTypes.label(car.type)}</span>
         {car.isFeatured && <span className="sg-ticket__flag">Popular</span>}
         {!ownImage && <span className="sg-ticket__sample">Sample photo</span>}
         {!car.isAvailable && <span className="sg-ticket__status">Currently booked</span>}

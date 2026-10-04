@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { adminDeleteCar, adminListCars, adminSetFeatured } from '../../api.js'
-import { CAR_TYPES, capitalize, formatPrice, typeLabel } from '../../constants.js'
+import useCarTypes from '../../carTypes.js'
+import { capitalize, formatPrice } from '../../constants.js'
 import CarForm from './CarForm.jsx'
 
 export default function CarsTab({ onUnauthorized }) {
+  const carTypes = useCarTypes()
   const [cars, setCars] = useState([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -71,7 +73,7 @@ export default function CarsTab({ onUnauthorized }) {
       <div className="toolbar">
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
           <option value="">All types</option>
-          {CAR_TYPES.map((t) => (
+          {carTypes.types.map((t) => (
             <option key={t.value} value={t.value}>
               {t.label}
             </option>
@@ -123,7 +125,7 @@ export default function CarsTab({ onUnauthorized }) {
                     <div className="muted">{car.brand}</div>
                   </td>
                   <td>
-                    <span className="badge badge--type">{typeLabel(car.type)}</span>
+                    <span className="badge badge--type">{carTypes.label(car.type)}</span>
                   </td>
                   <td className="muted">
                     {car.seats} seats · {capitalize(car.transmission)} · {capitalize(car.fuel)}

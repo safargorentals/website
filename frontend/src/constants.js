@@ -1,7 +1,8 @@
-// Car types are a fixed list in the backend (see CAR_TYPES in adminCars.js).
-// Each type has a stock photo (public/images) used for the category cards and
-// as a sample photo for cars that have no images yet.
-export const CAR_TYPES = [
+// Car types are managed in the admin panel (Car types tab) and loaded with
+// useCarTypes() in carTypes.js. This is the starting list, used until the
+// API answers. Each type has a photo used for the category list and as a
+// sample photo for cars that have no images yet.
+export const DEFAULT_CAR_TYPES = [
   { value: 'suv', label: 'SUV', image: '/images/suv.webp', blurb: 'Room for family and luggage' },
   { value: 'sedan', label: 'Sedan', image: '/images/sedan.webp', blurb: 'Comfort for city and highway' },
   { value: 'hatchback', label: 'Hatchback', image: '/images/hatchback.webp', blurb: 'Easy to park, light on fuel' },
@@ -23,14 +24,6 @@ export const ENQUIRY_STATUSES = [
 
 export const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+91 98765 43210'
 export const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || ''
-
-export function typeImage(value) {
-  return CAR_TYPES.find((t) => t.value === value)?.image || '/images/sedan.webp'
-}
-
-export function typeLabel(value) {
-  return CAR_TYPES.find((t) => t.value === value)?.label || value || 'Other'
-}
 
 export function capitalize(s) {
   return s ? s[0].toUpperCase() + s.slice(1) : ''

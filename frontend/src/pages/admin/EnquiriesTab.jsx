@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { adminDeleteEnquiry, adminListEnquiries, adminUpdateEnquiryStatus } from '../../api.js'
-import { ENQUIRY_STATUSES, telHref, typeLabel, whatsappHref } from '../../constants.js'
+import useCarTypes from '../../carTypes.js'
+import { ENQUIRY_STATUSES, telHref, whatsappHref } from '../../constants.js'
 
 // Accept camelCase or snake_case rows, whichever the backend returns.
 function normalize(e) {
@@ -30,6 +31,7 @@ function formatDateTime(value) {
 }
 
 export default function EnquiriesTab({ onUnauthorized }) {
+  const carTypes = useCarTypes()
   const [enquiries, setEnquiries] = useState([])
   const [statusFilter, setStatusFilter] = useState('')
   const [loading, setLoading] = useState(true)
@@ -124,7 +126,7 @@ export default function EnquiriesTab({ onUnauthorized }) {
                   <h3>{e.name}</h3>
                   <p className="muted">
                     {e.carName || 'Car removed'}
-                    {e.carType && ` · ${typeLabel(e.carType)}`} · {formatDateTime(e.createdAt)}
+                    {e.carType && ` · ${carTypes.label(e.carType)}`} · {formatDateTime(e.createdAt)}
                   </p>
                 </div>
                 <select

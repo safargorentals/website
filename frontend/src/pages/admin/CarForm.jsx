@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { adminCreateCar, adminUpdateCar, adminUploadImages } from '../../api.js'
-import { CAR_TYPES, FUELS, TRANSMISSIONS, capitalize } from '../../constants.js'
+import useCarTypes from '../../carTypes.js'
+import { FUELS, TRANSMISSIONS, capitalize } from '../../constants.js'
 
 const MAX_IMAGES = 10
 const MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp']
 
-function toForm(car) {
+function toForm(car, defaultType) {
   return {
     name: car?.name ?? '',
     brand: car?.brand ?? '',
-    type: car?.type ?? 'sedan',
+    type: car?.type ?? defaultType,
     seats: car?.seats ?? 5,
     transmission: car?.transmission ?? 'automatic',
     fuel: car?.fuel ?? 'petrol',
@@ -23,7 +24,8 @@ function toForm(car) {
 }
 
 export default function CarForm({ car, onClose, onSaved, onUnauthorized }) {
-  const [form, setForm] = useState(() => toForm(car))
+  const carTypes = useCarTypes()
+  const [form, setForm] = useState(() => toForm(car, carTypes.types[0]?.value ?? 'sedan'))
   const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -136,11 +138,15 @@ export default function CarForm({ car, onClose, onSaved, onUnauthorized }) {
           <label className={cls('type')}>
             <span>Type *</span>
             <select value={form.type} onChange={set('type')}>
-              {CAR_TYPES.map((t) => (
+              {carTypes.types.map((t) => (
                 <option key={t.value} value={t.value}>
                   {t.label}
                 </option>
               ))}
+              {/* Keep a car's current type selectable even if it was renamed or removed */}
+              {form.type && !carTypes.types.some((t) => t.value === form.type) && (
+                <option value={form.type}>{form.type}</option>
+              )}
             </select>
             {err('type')}
           </label>
@@ -216,7 +222,7 @@ export default function CarForm({ car, onClose, onSaved, onUnauthorized }) {
             <input
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="…or paste a Cloudinary image URL"
+              placeholder="…or paste an image link (https://)"
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addImageUrl())}
             />
             <button type="button" className="btn btn--ghost btn--sm" onClick={addImageUrl}>

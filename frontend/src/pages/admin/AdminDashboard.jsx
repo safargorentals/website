@@ -2,10 +2,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminLogout, adminMe } from '../../api.js'
 import CarsTab from './CarsTab.jsx'
+import CarTypesTab from './CarTypesTab.jsx'
 import EnquiriesTab from './EnquiriesTab.jsx'
 
 const TABS = [
   { key: 'cars', label: 'Cars' },
+  { key: 'types', label: 'Car types' },
   { key: 'enquiries', label: 'Enquiries' },
 ]
 
@@ -56,6 +58,7 @@ export default function AdminDashboard() {
         </nav>
 
         {tab === 'cars' && <CarsTab onUnauthorized={onUnauthorized} />}
+        {tab === 'types' && <CarTypesTab onUnauthorized={onUnauthorized} />}
         {tab === 'enquiries' && <EnquiriesTab onUnauthorized={onUnauthorized} />}
       </div>
     </div>

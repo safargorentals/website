@@ -1,7 +1,7 @@
 const { z } = require('zod');
 const carsModel = require('../models/cars');
+const carTypesModel = require('../models/carTypes');
 
-const CAR_TYPES = ['sedan', 'suv', 'hatchback', 'van', 'luxury', 'pickup'];
 const TRANSMISSIONS = ['manual', 'automatic'];
 const FUELS = ['petrol', 'diesel', 'hybrid', 'electric', 'cng'];
 
@@ -23,7 +23,8 @@ const adminCarSchema = z.object({
     .trim()
     .min(2, 'Brand must be at least 2 characters')
     .max(50, 'Brand must be at most 50 characters'),
-  type: z.enum(CAR_TYPES),
+  // Checked against the car_types table after parsing (see checkCarType)
+  type: z.string().trim().min(1, 'Choose a car type'),
   seats: z
     .number()
     .int()
@@ -39,12 +40,13 @@ const adminCarSchema = z.object({
     .default('INR'),
   images: z
     .array(
+      // Uploaded photos are Cloudinary links, but any https image link is
+      // accepted so pasted links (and older cars' images) can be saved.
       z
         .string()
-        .regex(
-          /^https:\/\/res\.cloudinary\.com\/.+/,
-          'Image URLs must be https:// links from res.cloudinary.com (upload them with POST /api/admin/uploads first)'
-        )
+        .trim()
+        .max(2000, 'Image URL is too long')
+        .regex(/^https:\/\/\S+$/, 'Image URLs must start with https://')
     )
     .max(10, 'At most 10 images are allowed')
     .default([]),
@@ -131,6 +133,14 @@ function sendValidationErrors(res, result) {
   res.status(400).json({ error: 'Validation failed', fields });
 }
 
+// The type must be one of the types managed in the admin panel.
+// Sends a 400 and returns false if it is not.
+async function checkCarType(res, type) {
+  if (type === undefined || (await carTypesModel.typeExists(type))) return true;
+  res.status(400).json({ error: 'Validation failed', fields: { type: 'Unknown car type' } });
+  return false;
+}
+
 function toModelPayload(data) {
   const payload = {};
   for (const [from, to] of Object.entries(FIELD_MAP)) {
@@ -174,6 +184,7 @@ async function createAdminCar(req, res, next) {
   try {
     const parsed = adminCarSchema.safeParse(req.body);
     if (!parsed.success) return sendValidationErrors(res, parsed);
+    if (!(await checkCarType(res, parsed.data.type))) return;
     const created = await carsModel.createCar(toModelPayload(parsed.data));
     res.status(201).json(toAdminCarResponse(created));
   } catch (err) {
@@ -188,6 +199,7 @@ async function updateAdminCar(req, res, next) {
     if (!parsedId.success) return sendValidationErrors(res, parsedId);
     const parsed = adminCarUpdateSchema.safeParse(req.body);
     if (!parsed.success) return sendValidationErrors(res, parsed);
+    if (!(await checkCarType(res, parsed.data.type))) return;
     const updated = await carsModel.updateCar(parsedId.data.id, toModelPayload(parsed.data));
     if (!updated) return res.status(404).json({ error: 'Car not found' });
     res.json(toAdminCarResponse(updated));

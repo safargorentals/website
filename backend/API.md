@@ -108,6 +108,17 @@ One car by id. `:id` must be a positive integer.
 { "error": "Car not found" }
 ```
 
+## Car types
+
+### GET /api/car-types
+
+The categories shown on the site, in display order. `value` is what cars
+store in `type` and what `GET /api/cars?type=` filters by.
+
+```json
+{ "data": [{ "value": "suv", "label": "SUV", "blurb": "Room for family and luggage", "image": "/images/suv.webp" }] }
+```
+
 ## Enquiries
 
 ### POST /api/enquiries
@@ -263,8 +274,9 @@ One car with admin fields. Unknown id -> `404 {"error":"Car not found"}`.
 
 Create a car -> `201` with the created car (admin shape).
 
-Required: `name` (2-100 chars), `brand` (2-50), `type`
-(`sedan`|`suv`|`hatchback`|`van`|`luxury`|`pickup`), `seats` (1-20),
+Required: `name` (2-100 chars), `brand` (2-50), `type` (the `value` of
+an existing car type, see GET /api/car-types; unknown types get
+`fields.type: "Unknown car type"`), `seats` (1-20),
 `transmission` (`manual`|`automatic`), `fuel`
 (`petrol`|`diesel`|`hybrid`|`electric`|`cng`), `pricePerDay` (0-1000000).
 
@@ -329,6 +341,35 @@ Enquiries linked to the car are kept; the database sets their `car_id` to NULL.
 
 All invalid input -> `400 {"error":"Validation failed","fields":{...}}`.
 
+## Admin car types
+
+All routes start with `/api/admin/car-types` and require an admin session.
+The admin shape adds `sortOrder` and `carCount` (cars using the type).
+`image` is an `https://` link or a bundled `/images/...` stock photo.
+
+### GET /api/admin/car-types
+
+Every type with its car count -> `{ "data": [...] }`.
+
+### POST /api/admin/car-types
+
+Body `{ "label": "Mini Van", "blurb"?: "...", "image"?: "https://..." }`
+-> `201`. The `value` is made from the label (`"mini-van"`) and never
+changes afterwards. A label that gives an existing value -> `409`.
+
+### PUT /api/admin/car-types/:value
+
+Change `label`, `blurb` and/or `image` (null clears blurb/image).
+
+### PUT /api/admin/car-types/order
+
+Body `{ "slugs": ["suv", "sedan", ...] }` listing every type exactly once,
+in the new order -> the reordered list.
+
+### DELETE /api/admin/car-types/:value
+
+`200 { "ok": true }`, or `409` while any car still uses the type.
+
 ## Admin image uploads
 
 ### POST /api/admin/uploads
@@ -364,8 +405,8 @@ clean `400`/`413` JSON, never a stack trace:
 ### Frontend note
 
 Upload FIRST, then paste the returned URLs into the car create/update
-body (`images` array, max 10 per car). The car endpoints only accept
-`https://res.cloudinary.com/...` URLs - anything else is rejected with 400.
+body (`images` array, max 10 per car). The car endpoints accept any
+`https://` image link, so pasted links work too.
 
 ## Admin enquiry management
 

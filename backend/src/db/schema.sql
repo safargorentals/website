@@ -30,6 +30,30 @@ CREATE TABLE IF NOT EXISTS cars (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Car types (SUV, sedan, ...), managed from the admin panel.
+-- cars.type stores a slug from here; the app checks it on every car save
+-- and refuses to delete a type while cars still use it.
+CREATE TABLE IF NOT EXISTS car_types (
+  slug TEXT PRIMARY KEY CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  label TEXT NOT NULL,
+  blurb TEXT,
+  image TEXT,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- The original six types. ON CONFLICT keeps any edits made in the admin
+-- panel when this file runs again on the next deploy.
+INSERT INTO car_types (slug, label, blurb, image, sort_order) VALUES
+  ('suv', 'SUV', 'Room for family and luggage', '/images/suv.webp', 1),
+  ('sedan', 'Sedan', 'Comfort for city and highway', '/images/sedan.webp', 2),
+  ('hatchback', 'Hatchback', 'Easy to park, light on fuel', '/images/hatchback.webp', 3),
+  ('van', 'Van', 'For groups and long trips', '/images/van.webp', 4),
+  ('luxury', 'Luxury', 'For weddings and special days', '/images/luxury.webp', 5),
+  ('pickup', 'Pickup', 'Tough roads and cargo', '/images/pickup.webp', 6)
+ON CONFLICT (slug) DO NOTHING;
+
 -- Customer enquiries (no payments involved)
 CREATE TABLE IF NOT EXISTS enquiries (
   id SERIAL PRIMARY KEY,

@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { CAR_TYPES, shortDate, todayString } from '../constants.js'
+import useCarTypes from '../carTypes.js'
+import { shortDate, todayString } from '../constants.js'
 import Icon from './Icon.jsx'
 
 // The hero booking box. It doesn't search the server by itself: it hands the
 // trip to Home, which filters the fleet, shows trip totals on each car and
 // pre-fills the enquiry form.
 export default function SearchWidget({ initial, onSearch }) {
+  const { types } = useCarTypes()
   const [form, setForm] = useState(
     () =>
       initial || {
@@ -49,7 +51,7 @@ export default function SearchWidget({ initial, onSearch }) {
     <form className="sg-pass" onSubmit={submit}>
       <div className="sg-pass__main">
         <div className="sg-pass__types" role="radiogroup" aria-label="Car type">
-          {[{ value: '', label: 'Any car' }, ...CAR_TYPES].map((t) => (
+          {[{ value: '', label: 'Any car' }, ...types].map((t) => (
             <button
               type="button"
               key={t.value || 'any'}

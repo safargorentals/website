@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createEnquiry } from '../api.js'
-import { formatPrice, rentalDays, todayString, typeImage, typeLabel } from '../constants.js'
+import useCarTypes from '../carTypes.js'
+import { formatPrice, rentalDays, todayString } from '../constants.js'
 
 const EMPTY = {
   name: '',
@@ -63,6 +64,7 @@ function initialForm(trip) {
 }
 
 export default function EnquiryModal({ car, trip, onClose }) {
+  const carTypes = useCarTypes()
   const [form, setForm] = useState(() => initialForm(trip))
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
@@ -148,11 +150,11 @@ export default function EnquiryModal({ car, trip, onClose }) {
             </h2>
 
             <div className="booking-car">
-              <img src={car.images?.[0] || typeImage(car.type)} alt="" />
+              <img src={car.images?.[0] || carTypes.image(car.type)} alt="" />
               <div>
                 <strong>{car.name}</strong>
                 <span>
-                  {typeLabel(car.type)} · {formatPrice(car.pricePerDay, car.currency)}/day
+                  {carTypes.label(car.type)} · {formatPrice(car.pricePerDay, car.currency)}/day
                 </span>
                 {days > 0 && (
                   <span className="booking-car__total">

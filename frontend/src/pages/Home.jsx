@@ -6,14 +6,13 @@ import Icon from '../components/Icon.jsx'
 import SearchWidget from '../components/SearchWidget.jsx'
 import useReveal from '../useReveal.js'
 import useTheme from '../theme.js'
+import useCarTypes from '../carTypes.js'
 import {
-  CAR_TYPES,
   CONTACT_PHONE,
   WHATSAPP_NUMBER,
   rentalDays,
   shortDate,
   telHref,
-  typeLabel,
   whatsappHref,
 } from '../constants.js'
 import '../site.css'
@@ -146,6 +145,7 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [theme, toggleTheme] = useTheme()
+  const { types: carTypes, label: typeLabel, image: typeImage } = useCarTypes()
 
   const load = useCallback(async (selectedType, pageNum) => {
     setLoading(true)
@@ -312,14 +312,14 @@ export default function Home() {
           </h2>
         </div>
         <ul className="sg-types">
-          {CAR_TYPES.map((t, i) => (
+          {carTypes.map((t, i) => (
             <li key={t.value} className="reveal" style={{ '--i': i }}>
               <button className="sg-type" onClick={() => pickType(t.value)}>
                 <span className="sg-type__num">{pad(i + 1)}</span>
                 <span className="sg-type__name">{t.label}</span>
                 <span className="sg-type__blurb">{t.blurb}</span>
                 <span className="sg-type__img">
-                  <img src={t.image} alt="" loading="lazy" />
+                  <img src={typeImage(t.value)} alt="" loading="lazy" />
                 </span>
                 <span className="sg-type__go">
                   <Icon name="arrow" size={22} />
@@ -388,7 +388,7 @@ export default function Home() {
         )}
 
         <nav className="sg-filters" aria-label="Car types">
-          {[{ value: '', label: 'All' }, ...CAR_TYPES].map((t) => (
+          {[{ value: '', label: 'All' }, ...carTypes].map((t) => (
             <button
               key={t.value || 'all'}
               className={`sg-filter ${type === t.value ? 'is-active' : ''}`}
@@ -554,7 +554,7 @@ export default function Home() {
           </div>
           <div>
             <h3>Car types</h3>
-            {CAR_TYPES.map((t) => (
+            {carTypes.map((t) => (
               <button key={t.value} onClick={() => pickType(t.value)}>
                 {t.label}
               </button>
