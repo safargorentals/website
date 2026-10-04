@@ -1,5 +1,11 @@
-# Render Blueprint: the API web service and a Postgres database.
+# Render Blueprint: the API web service (free plan).
 # The website itself is hosted on Netlify (see frontend/netlify.toml).
+# The database is Neon's free Postgres (neon.tech), which does not expire;
+# Render's free database is deleted after 30 days, so it is not used.
+# Free web services sleep after 15 minutes without traffic: a free uptime
+# monitor (e.g. UptimeRobot) calling /api/health every 5 minutes keeps it
+# awake, within Render's 750 free hours a month. /api/health does not touch
+# the database, so the pings do not use Neon's free compute hours.
 # Deploy from the Render dashboard: New > Blueprint > pick this repo.
 services:
   - type: web
@@ -16,10 +22,9 @@ services:
         value: "22"
       - key: NODE_ENV
         value: production
+      # Neon connection string (ends in ?sslmode=require)
       - key: DATABASE_URL
-        fromDatabase:
-          name: safargo-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       # The Netlify site's URL, e.g. https://safargo.netlify.app
@@ -38,9 +43,3 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
-
-databases:
-  - name: safargo-db
-    plan: free
-    databaseName: safargo
-    user: safargo

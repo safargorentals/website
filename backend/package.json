@@ -9,7 +9,8 @@
     "db:init": "node src/db/init.js",
     "db:seed": "node src/db/seed.js",
     "admin:create": "node src/db/createAdmin.js",
-    "admin:change-password": "node src/db/changeAdminPassword.js"
+    "admin:change-password": "node src/db/changeAdminPassword.js",
+    "db:copy": "node src/db/copyDatabase.js"
   },
   "license": "ISC",
   "private": true,
