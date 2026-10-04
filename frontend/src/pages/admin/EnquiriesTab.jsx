@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { adminDeleteEnquiry, adminListEnquiries, adminUpdateEnquiryStatus } from '../../api.js'
 import useCarTypes from '../../carTypes.js'
-import { ENQUIRY_STATUSES, telHref, whatsappHref } from '../../constants.js'
+import { ENQUIRY_STATUSES, rentalDays, telHref, whatsappHref } from '../../constants.js'
 
 // Accept camelCase or snake_case rows, whichever the backend returns.
 function normalize(e) {
@@ -25,9 +25,66 @@ function normalize(e) {
   }
 }
 
-function formatDateTime(value) {
+// '2026-10-10' -> 'Sat, 10 Oct 2026' (built from the parts, so the day
+// never shifts with the browser's time zone)
+function formatTripDate(value) {
   if (!value) return ''
-  return new Date(value).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
+  const [y, m, d] = value.split('-').map(Number)
+  if (!y || !m || !d) return value
+  return new Date(y, m - 1, d).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+// '14:30' -> '2:30 PM'
+function formatTime(value) {
+  if (!value) return ''
+  const [h, min] = value.split(':').map(Number)
+  if (Number.isNaN(h)) return value
+  return `${h % 12 || 12}:${String(min || 0).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`
+}
+
+// When the enquiry arrived: '5 Oct 2026, 3:42 PM'
+function formatReceived(value) {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  const date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  return `${date}, ${formatTime(`${d.getHours()}:${d.getMinutes()}`)}`
+}
+
+// Exact trip length: '2 days 8 hrs 30 min'
+function tripLength(e) {
+  if (!e.startDate || !e.endDate) return ''
+  const start = new Date(`${e.startDate}T${e.pickupTime || '10:00'}`)
+  const end = new Date(`${e.endDate}T${e.dropoffTime || '10:00'}`)
+  const mins = Math.round((end - start) / 60000)
+  if (!(mins > 0)) return ''
+  const days = Math.floor(mins / 1440)
+  const hours = Math.floor((mins % 1440) / 60)
+  const rest = mins % 60
+  return [
+    days && `${days} ${days === 1 ? 'day' : 'days'}`,
+    hours && `${hours} ${hours === 1 ? 'hr' : 'hrs'}`,
+    rest && `${rest} min`,
+  ]
+    .filter(Boolean)
+    .join(' ')
+}
+
+// '2 hours ago', '3 days ago'
+function timeAgo(value) {
+  const mins = Math.round((Date.now() - new Date(value).getTime()) / 60000)
+  if (!Number.isFinite(mins)) return ''
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins} min ago`
+  const hours = Math.round(mins / 60)
+  if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`
+  const days = Math.round(hours / 24)
+  return `${days} ${days === 1 ? 'day' : 'days'} ago`
 }
 
 export default function EnquiriesTab({ onUnauthorized }) {
@@ -126,7 +183,7 @@ export default function EnquiriesTab({ onUnauthorized }) {
                   <h3>{e.name}</h3>
                   <p className="muted">
                     {e.carName || 'Car removed'}
-                    {e.carType && ` · ${carTypes.label(e.carType)}`} · {formatDateTime(e.createdAt)}
+                    {e.carType && ` · ${carTypes.label(e.carType)}`}
                   </p>
                 </div>
                 <select
@@ -144,15 +201,35 @@ export default function EnquiriesTab({ onUnauthorized }) {
 
               <dl className="enquiry__details">
                 <div>
-                  <dt>Dates</dt>
+                  <dt>Pickup</dt>
                   <dd>
-                    {e.startDate} {e.pickupTime} → {e.endDate} {e.dropoffTime}
+                    <strong>{formatTripDate(e.startDate)}</strong> · {formatTime(e.pickupTime)}
+                    {e.pickupLocation && <div className="muted">{e.pickupLocation}</div>}
                   </dd>
                 </div>
                 <div>
-                  <dt>Route</dt>
+                  <dt>Return</dt>
                   <dd>
-                    {e.pickupLocation} → {e.dropoffLocation}
+                    <strong>{formatTripDate(e.endDate)}</strong> · {formatTime(e.dropoffTime)}
+                    {e.dropoffLocation && <div className="muted">{e.dropoffLocation}</div>}
+                  </dd>
+                </div>
+                {rentalDays(e) > 0 && (
+                  <div>
+                    <dt>Rental length</dt>
+                    <dd>
+                      {tripLength(e) || 'Same day'}
+                      {/* The site estimates prices per started day */}
+                      <div className="muted">
+                        Charged as {rentalDays(e)} {rentalDays(e) === 1 ? 'day' : 'days'}
+                      </div>
+                    </dd>
+                  </div>
+                )}
+                <div>
+                  <dt>Received</dt>
+                  <dd>
+                    {formatReceived(e.createdAt)} <span className="muted">({timeAgo(e.createdAt)})</span>
                   </dd>
                 </div>
                 {e.email && (

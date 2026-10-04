@@ -52,6 +52,7 @@ async function login(req, res, next) {
       expiresIn: env.tokenTtlSeconds,
     });
     res.cookie(env.cookieOptions.name, token, env.cookieOptions);
+    res.cookie(env.hintCookieOptions.name, '1', env.hintCookieOptions);
     res.json({ ok: true });
   } catch (err) {
     next(err);
@@ -65,6 +66,7 @@ async function logout(req, res, next) {
   try {
     await adminsModel.bumpTokenVersion(req.admin.id);
     res.clearCookie(env.cookieOptions.name, env.cookieOptions);
+    res.clearCookie(env.hintCookieOptions.name, env.hintCookieOptions);
     res.json({ ok: true });
   } catch (err) {
     next(err);

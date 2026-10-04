@@ -6,6 +6,7 @@ import Icon from '../components/Icon.jsx'
 import SearchWidget from '../components/SearchWidget.jsx'
 import useReveal from '../useReveal.js'
 import useTheme from '../theme.js'
+import { useAdminRedirect } from './admin/session.js'
 import useCarTypes from '../carTypes.js'
 import {
   CONTACT_PHONE,
@@ -133,6 +134,8 @@ function RoundBadge() {
 }
 
 export default function Home() {
+  // A logged-in admin opening the website goes to the dashboard instead
+  const checkingAdmin = useAdminRedirect()
   const [type, setType] = useState('')
   const [cars, setCars] = useState([])
   const [page, setPage] = useState(1)
@@ -202,6 +205,8 @@ export default function Home() {
   }
 
   const days = rentalDays(trip)
+
+  if (checkingAdmin) return null
 
   return (
     <div className="sg">

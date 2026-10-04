@@ -6,9 +6,10 @@ import { adminLogout, adminMe } from '../../api.js'
 // browser cannot read, so "am I signed in?" is always asked of the API
 // (GET /api/admin/me).
 //
-// Rule: leaving the dashboard ends the session. Back/Forward, the logo link,
-// or coming back to the dashboard from another website all log out; only a
-// refresh keeps you signed in.
+// Rules while logged in: the Back button keeps you on the dashboard, and
+// opening the website sends you to the dashboard (see useAdminRedirect).
+// You leave the admin only by logging out (the Log out button, or the logo,
+// which logs out and opens the website).
 
 // Tells other open admin tabs about a logout, so they close the dashboard
 // straight away instead of on their next request.
@@ -21,15 +22,37 @@ export function announceLogout() {
 // Re-check at most this often when the tab regains focus
 const RECHECK_MS = 30 * 1000
 
-// How this page load started. 'back_forward' means the browser's Back or
-// Forward brought us here from another page or site, i.e. the admin left
-// the dashboard and came back. Only the first dashboard visit of a page
-// load can be that; later ones are navigation inside the app.
-let firstVisitThisLoad = true
-function arrivedWithBackForward() {
-  const wasFirst = firstVisitThisLoad
-  firstVisitThisLoad = false
-  return wasFirst && performance.getEntriesByType?.('navigation')[0]?.type === 'back_forward'
+// The server sets this readable cookie next to the session cookie (it
+// grants nothing; it only says an admin logged in on this browser)
+const HINT = 'admin_hint'
+export const hasAdminHint = () => document.cookie.split('; ').some((c) => c === `${HINT}=1`)
+const clearAdminHint = () => {
+  document.cookie = `${HINT}=; Max-Age=0; Path=/; SameSite=Strict`
+}
+
+// For public pages: if an admin is logged in on this browser, go to the
+// dashboard (replace, so Back does not return to the website). Returns true
+// while that is being checked, so the page can render nothing meanwhile.
+export function useAdminRedirect() {
+  const navigate = useNavigate()
+  const [checking, setChecking] = useState(hasAdminHint)
+
+  useEffect(() => {
+    if (!checking) return
+    let active = true
+    adminMe()
+      .then(() => active && navigate('/admin/dashboard', { replace: true }))
+      .catch(() => {
+        // Session ended (expired, logged out elsewhere): forget the hint
+        clearAdminHint()
+        if (active) setChecking(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [checking, navigate])
+
+  return checking
 }
 
 // Guards admin pages. Renders nothing until the API confirms the session,
@@ -69,26 +92,28 @@ export function useAdminSession() {
       lastCheck.current = Date.now()
       return adminMe()
         .then((res) => setEmail(res.email))
-        .catch(() => leave(reason))
+        .catch(() => {
+        clearAdminHint()
+        leave(reason)
+      })
     },
     [leave],
   )
 
   useEffect(() => {
-    if (arrivedWithBackForward()) {
-      endSession()
-      return
-    }
     check('required')
 
-    // Back button: an extra history entry means Back first lands here, on
-    // the dashboard; the popstate that follows logs out instead of leaving
-    // the admin with the session still open.
+    // Back button: an extra history entry means Back lands here, on the
+    // dashboard, and is put straight back - so Back does nothing. If a
+    // browser skips that entry anyway, the page it reaches (website or login)
+    // sends a logged-in admin back to the dashboard.
     window.history.pushState(window.history.state, '', window.location.href)
-    const onPopState = () => endSession()
+    const onPopState = () => {
+      if (!ending.current) window.history.pushState(window.history.state, '', window.location.href)
+    }
 
-    // Restored from the back/forward cache = came back from elsewhere
-    const onPageShow = (e) => e.persisted && endSession()
+    // Restored from the back/forward cache: make sure the session is alive
+    const onPageShow = (e) => e.persisted && check('required')
     const onVisible = () => {
       if (document.visibilityState === 'visible' && Date.now() - lastCheck.current > RECHECK_MS) check()
     }

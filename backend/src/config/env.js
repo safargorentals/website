@@ -70,6 +70,12 @@ env.cookieOptions = {
   path: '/',
 };
 
+// A readable companion cookie that only says "an admin is logged in on this
+// browser". It grants nothing (the API never reads it); the website uses it
+// to send a logged-in admin straight to the dashboard without asking the
+// API on every public page view. Set and cleared together with the session.
+env.hintCookieOptions = { ...env.cookieOptions, name: 'admin_hint', httpOnly: false };
+
 // In production a missing or weak JWT_SECRET would let anyone forge admin
 // tokens, so refuse to start instead of running with a guessable secret.
 if (
