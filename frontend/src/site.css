@@ -138,6 +138,15 @@ body:has(.sg) {
   color: var(--sg-ink-2);
 }
 
+.sg-hero .sg-kicker {
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+
+.sg-hero .sg-kicker > span:not(.sg-dot) {
+  white-space: nowrap;
+}
+
 .sg-dot {
   width: 9px;
   height: 9px;
@@ -526,7 +535,7 @@ body:has(.sg) {
   font-weight: 800;
   font-stretch: 75%;
   line-height: 0.86;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.01em;
   text-transform: uppercase;
 }
 
@@ -1837,11 +1846,18 @@ body:has(.sg) {
   gap: 32px;
 }
 
-.sg-footer__about {
+.sg-footer__about p {
   max-width: 22ch;
   font-size: 1.4rem;
   font-weight: 600;
   line-height: 1.25;
+}
+
+.sg-footer__about small {
+  display: block;
+  margin-top: 14px;
+  color: var(--sg-night-muted);
+  font-size: 0.9rem;
 }
 
 .sg-footer h3 {
@@ -1875,11 +1891,11 @@ body:has(.sg) {
 .sg-footer__word {
   margin: 56px 0 -0.13em;
   color: color-mix(in srgb, var(--sg-night-text) 8%, var(--sg-night));
-  font-size: 20.5vw;
+  font-size: 18.5vw;
   font-weight: 800;
   font-stretch: 75%;
   line-height: 0.8;
-  letter-spacing: -0.015em;
+  letter-spacing: 0.03em;
   text-align: center;
   text-transform: uppercase;
   white-space: nowrap;

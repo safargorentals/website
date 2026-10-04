@@ -261,7 +261,8 @@ export default function Home() {
         <div className="sg-wrap sg-hero__grid">
           <div className="sg-hero__copy">
             <p className="sg-kicker">
-              <span className="sg-dot" /> Self-drive car rentals
+              <span className="sg-dot" />
+              <span>Self-drive car rentals</span> <span>by AVS Rent A Car</span>
             </p>
             <h1>
               <span>Drive</span> <span>Kochi</span> <em>your way.</em>
@@ -539,7 +540,10 @@ export default function Home() {
 
       <footer className="sg-footer">
         <div className="sg-wrap sg-footer__grid">
-          <p className="sg-footer__about">Self-drive car rentals for city trips, weekends away and long journeys.</p>
+          <div className="sg-footer__about">
+            <p>Self-drive car rentals for city trips, weekends away and long journeys.</p>
+            <small>Drive Kochi is a unit of AVS Rent A Car.</small>
+          </div>
           <div>
             <h3>Explore</h3>
             {NAV.map((n) => (
@@ -570,7 +574,7 @@ export default function Home() {
           Drive<span>Kochi</span>
         </p>
         <div className="sg-wrap sg-footer__bottom">
-          <span>© {YEAR} Drive Kochi</span>
+          <span>© {YEAR} Drive Kochi · A unit of AVS Rent A Car</span>
           <span>Drive safe. Come back with stories.</span>
         </div>
       </footer>
