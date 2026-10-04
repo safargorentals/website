@@ -1,53 +1,56 @@
 import { capitalize, formatPrice, typeImage, typeLabel } from '../constants.js'
 import Icon from './Icon.jsx'
 
+// A car shown as a travel ticket: photo on top, specs, then a tear-off stub
+// with the price and the booking button.
 export default function CarCard({ car, days = 0, onBook }) {
   const ownImage = car.images?.[0]
+  const fuel = car.fuel === 'cng' ? 'CNG' : capitalize(car.fuel)
 
   return (
-    <article className={`car-card ${car.isAvailable ? '' : 'car-card--off'}`}>
-      <div className="car-card__image">
+    <article className={`sg-ticket ${car.isAvailable ? '' : 'is-off'}`}>
+      <div className="sg-ticket__media">
         <img src={ownImage || typeImage(car.type)} alt={car.name} loading="lazy" />
-        <span className="car-card__type">{typeLabel(car.type)}</span>
-        {car.isFeatured && <span className="car-card__flag">Popular</span>}
-        {!ownImage && <span className="car-card__sample">Sample photo</span>}
-        {!car.isAvailable && <span className="car-card__status">Currently booked</span>}
+        <span className="sg-ticket__type">{typeLabel(car.type)}</span>
+        {car.isFeatured && <span className="sg-ticket__flag">Popular</span>}
+        {!ownImage && <span className="sg-ticket__sample">Sample photo</span>}
+        {!car.isAvailable && <span className="sg-ticket__status">Currently booked</span>}
       </div>
 
-      <div className="car-card__body">
-        <div className="car-card__title">
-          <h3>{car.name}</h3>
-          {car.brand && <span>{car.brand}</span>}
-        </div>
-
-        <ul className="car-card__specs">
-          <li>
-            <Icon name="users" size={16} /> {car.seats} seats
-          </li>
-          <li>
-            <Icon name="gear" size={16} /> {capitalize(car.transmission)}
-          </li>
-          <li>
-            <Icon name="fuel" size={16} /> {car.fuel === 'cng' ? 'CNG' : capitalize(car.fuel)}
-          </li>
-        </ul>
-
-        <div className="car-card__footer">
-          <div className="car-card__price">
-            <p>
-              <strong>{formatPrice(car.pricePerDay, car.currency)}</strong>
-              <span>/day</span>
-            </p>
-            {days > 0 && (
-              <small>
-                {formatPrice(car.pricePerDay * days, car.currency)} for {days} {days === 1 ? 'day' : 'days'}
-              </small>
-            )}
+      <div className="sg-ticket__body">
+        {car.brand && <p className="sg-ticket__brand">{car.brand}</p>}
+        <h3>{car.name}</h3>
+        <dl className="sg-ticket__specs">
+          <div>
+            <dt>Seats</dt>
+            <dd>{car.seats}</dd>
           </div>
-          <button className="btn btn--primary" onClick={() => onBook(car)} disabled={!car.isAvailable}>
-            Rent now
-          </button>
+          <div>
+            <dt>Gear</dt>
+            <dd>{capitalize(car.transmission)}</dd>
+          </div>
+          <div>
+            <dt>Fuel</dt>
+            <dd>{fuel}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div className="sg-ticket__stub">
+        <div className="sg-ticket__price">
+          <p>
+            <strong>{formatPrice(car.pricePerDay, car.currency)}</strong>
+            <span>/day</span>
+          </p>
+          {days > 0 && (
+            <small>
+              {formatPrice(car.pricePerDay * days, car.currency)} for {days} {days === 1 ? 'day' : 'days'}
+            </small>
+          )}
         </div>
+        <button className="sg-btn sg-btn--yellow" onClick={() => onBook(car)} disabled={!car.isAvailable}>
+          {car.isAvailable ? 'Book' : 'Booked'} <Icon name="arrow" size={16} />
+        </button>
       </div>
     </article>
   )

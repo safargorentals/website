@@ -15,37 +15,43 @@ import {
   typeLabel,
   whatsappHref,
 } from '../constants.js'
+import '../site.css'
 
 const PAGE_SIZE = 12
 const YEAR = new Date().getFullYear()
 
 const NAV = [
-  { href: '#fleet', label: 'Our fleet' },
-  { href: '#why', label: 'Why SafarGo' },
+  { href: '#fleet', label: 'Fleet' },
   { href: '#how', label: 'How it works' },
+  { href: '#why', label: 'Why us' },
   { href: '#faq', label: 'FAQs' },
 ]
 
+// Shown in the scrolling yellow band under the hero
+const PLACES = ['Munnar', 'Alleppey', 'Varkala', 'Wayanad', 'Thekkady', 'Kochi', 'Vagamon', 'Kovalam']
+
+const PROMISES = ['No account needed', 'Free booking request', 'Pay after we confirm', 'Pickup where you want']
+
 const BENEFITS = [
-  { icon: 'tag', title: 'Clear daily prices', text: 'The price you see per day is shown up front on every car.' },
-  { icon: 'bolt', title: 'Book in minutes', text: 'Pick a car, choose your dates and send a request. No account needed.' },
-  { icon: 'phone', title: 'Quick call-back', text: 'We call you to confirm the car, the price and the pickup details.' },
-  { icon: 'route', title: 'Your pickup, your drop-off', text: 'Tell us where to hand over and collect the car, even in different places.' },
-  { icon: 'shield', title: 'Well-kept cars', text: 'Every car is cleaned and checked before it goes out on a trip.' },
-  { icon: 'headset', title: 'Real people to talk to', text: 'Questions before or during your trip? Call or WhatsApp us.' },
+  { title: 'Clear daily prices', text: 'The price you see per day is shown up front on every car.' },
+  { title: 'Book in minutes', text: 'Pick a car, choose your dates and send a request. No account needed.' },
+  { title: 'Quick call-back', text: 'We call you to confirm the car, the price and the pickup details.' },
+  { title: 'Your pickup, your drop-off', text: 'Tell us where to hand over and collect the car, even in different places.' },
+  { title: 'Well-kept cars', text: 'Every car is cleaned and checked before it goes out on a trip.' },
+  { title: 'Real people to talk to', text: 'Questions before or during your trip? Call or WhatsApp us.' },
 ]
 
 const STEPS = [
-  { icon: 'search', title: 'Choose your car', text: 'Browse the fleet and pick the car that fits your trip.' },
-  { icon: 'calendar', title: 'Pick dates and places', text: 'Tell us when and where you want to pick up and return it.' },
-  { icon: 'phone', title: 'We confirm by phone', text: 'We call you back to confirm availability and the final price.' },
-  { icon: 'car', title: 'Pick up and drive', text: 'Collect the car and enjoy the journey.' },
+  { title: 'Choose your car', text: 'Browse the fleet and pick the car that fits your trip.' },
+  { title: 'Pick dates and places', text: 'Tell us when and where you want to pick up and return it.' },
+  { title: 'We confirm by phone', text: 'We call you back to confirm availability and the final price.' },
+  { title: 'Pick up and drive', text: 'Collect the keys and enjoy the journey.' },
 ]
 
 const FAQS = [
   {
     q: 'How do I book a car?',
-    a: 'Choose a car, tap "Rent now" and fill in your dates, times and pickup and drop-off places. We will call you to confirm the booking.',
+    a: 'Choose a car, tap "Book" and fill in your dates, times and pickup and drop-off places. We will call you to confirm the booking.',
   },
   {
     q: 'Do I pay when I send the request?',
@@ -57,7 +63,7 @@ const FAQS = [
   },
   {
     q: 'Can I return the car somewhere else?',
-    a: 'Yes. Untick "Return to the same location" and enter a different drop-off place. We will confirm it when we call.',
+    a: 'Yes. Untick "Return to the same place" and enter a different drop-off place. We will confirm it when we call.',
   },
   {
     q: 'What does the price per day include?',
@@ -65,8 +71,29 @@ const FAQS = [
   },
 ]
 
+const pad = (n) => String(n).padStart(2, '0')
+
 function scrollToId(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// Circular text that slowly spins on the hero photo
+function RoundBadge() {
+  const text = PROMISES.join(' • ') + ' • '
+  return (
+    <svg className="sg-roundel" viewBox="0 0 200 200" aria-hidden="true">
+      <defs>
+        <path id="sg-roundel-path" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" />
+      </defs>
+      <circle cx="100" cy="100" r="99" className="sg-roundel__disc" />
+      <text className="sg-roundel__text">
+        <textPath href="#sg-roundel-path" textLength="485">
+          {text}
+        </textPath>
+      </text>
+      <path className="sg-roundel__arrow" d="M78 118 L118 78 M90 78 H118 V106" />
+    </svg>
+  )
 }
 
 export default function Home() {
@@ -108,7 +135,7 @@ export default function Home() {
       .catch(() => {})
   }, [])
 
-  // Header gets a shadow once the page is scrolled
+  // Header tightens up once the page is scrolled
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
     onScroll()
@@ -135,24 +162,44 @@ export default function Home() {
   const days = rentalDays(trip)
 
   return (
-    <>
-      <header className={`site-header ${scrolled ? 'site-header--scrolled' : ''}`}>
-        <div className="container site-header__inner">
-          <a href="/" className="logo">
+    <div className="sg">
+      <div className="sg-strip" aria-hidden="true">
+        <div className="sg-strip__track">
+          {[0, 1].map((k) => (
+            <span key={k}>
+              {PROMISES.map((p) => (
+                <span key={p}>
+                  {p} <i>✦</i>{' '}
+                </span>
+              ))}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <header className={`sg-header ${scrolled ? 'is-scrolled' : ''}`}>
+        <div className="sg-wrap sg-header__inner">
+          <a href="/" className="sg-logo" aria-label="SafarGo home">
+            <span className="sg-logo__sign" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18">
+                <path d="M7 20V11a3 3 0 0 1 3-3h8M14 4l4 4-4 4" />
+              </svg>
+            </span>
             Safar<span>Go</span>
           </a>
-          <nav className={`site-nav ${menuOpen ? 'site-nav--open' : ''}`} aria-label="Main">
-            {NAV.map((n) => (
+          <nav className={`sg-nav ${menuOpen ? 'is-open' : ''}`} aria-label="Main">
+            {NAV.map((n, i) => (
               <a key={n.href} href={n.href} onClick={() => setMenuOpen(false)}>
+                <small>{pad(i + 1)}</small>
                 {n.label}
               </a>
             ))}
           </nav>
-          <a href={telHref(CONTACT_PHONE)} className="btn btn--primary btn--sm site-header__call">
+          <a href={telHref(CONTACT_PHONE)} className="sg-btn sg-btn--ink sg-header__call">
             <Icon name="phone" size={16} /> <span>{CONTACT_PHONE}</span>
           </a>
           <button
-            className="site-header__menu"
+            className="sg-header__menu"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((o) => !o)}
@@ -162,74 +209,93 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="hero">
-        <div className="container hero__inner">
-          <div className="hero__copy">
-            <p className="eyebrow">Self-drive car rentals</p>
-            <h1>
-              Rent the right car for <em>every journey</em>
-            </h1>
-            <p className="hero__lead">
-              SUVs, sedans, hatchbacks and more at clear daily prices. Choose your dates, send a request and we'll call
-              you to confirm.
+      <section className="sg-hero">
+        <div className="sg-wrap sg-hero__grid">
+          <div className="sg-hero__copy">
+            <p className="sg-kicker">
+              <span className="sg-dot" /> Self-drive car rentals
             </p>
-            <ul className="hero__points">
-              <li>
-                <Icon name="check" size={16} /> No account needed
-              </li>
-              <li>
-                <Icon name="check" size={16} /> Free booking request
-              </li>
-              <li>
-                <Icon name="check" size={16} /> Pay after we confirm
-              </li>
-            </ul>
+            <h1>
+              <span>Drive</span> <span>your own</span> <em>safar.</em>
+            </h1>
+            <p className="sg-hero__lead">
+              SUVs, sedans, hatchbacks, vans and more at clear daily prices. Send a free booking request and we'll
+              call you to confirm. No account, no advance.
+            </p>
           </div>
+
+          <figure className="sg-hero__photo">
+            <img src="/images/hero.webp" alt="A car driving down an open road at sunset" />
+            <RoundBadge />
+            <figcaption className="sg-stone" aria-hidden="true">
+              <span>Safar</span>
+              <strong>0</strong>
+              <small>km</small>
+            </figcaption>
+          </figure>
+        </div>
+
+        <div className="sg-wrap">
           <SearchWidget onSearch={onSearch} />
         </div>
       </section>
 
-      <section className="section container" aria-labelledby="types-title">
-        <div className="section__head reveal">
-          <div>
-            <p className="eyebrow">Browse by type</p>
-            <h2 id="types-title">Find a car that fits your trip</h2>
-          </div>
-        </div>
-        <div className="type-grid">
-          {CAR_TYPES.map((t, i) => (
-            <button
-              key={t.value}
-              className="type-card reveal"
-              style={{ '--i': i }}
-              onClick={() => pickType(t.value)}
-            >
-              <img src={t.image} alt="" loading="lazy" />
-              <span className="type-card__go">
-                <Icon name="arrow" size={18} />
-              </span>
-              <span className="type-card__text">
-                <strong>{t.label}</strong>
-                <small>{t.blurb}</small>
-              </span>
-            </button>
+      <div className="sg-band" aria-hidden="true">
+        <div className="sg-band__track">
+          {[0, 1].map((k) => (
+            <span key={k}>
+              {PLACES.map((p) => (
+                <span key={p}>
+                  {p}
+                  <i>✺</i>
+                </span>
+              ))}
+            </span>
           ))}
         </div>
+      </div>
+
+      <section className="sg-section sg-wrap" aria-labelledby="types-title">
+        <div className="sg-head reveal">
+          <p className="sg-kicker">The garage</p>
+          <h2 id="types-title">
+            What are you <em>driving</em> today?
+          </h2>
+        </div>
+        <ul className="sg-types">
+          {CAR_TYPES.map((t, i) => (
+            <li key={t.value} className="reveal" style={{ '--i': i }}>
+              <button className="sg-type" onClick={() => pickType(t.value)}>
+                <span className="sg-type__num">{pad(i + 1)}</span>
+                <span className="sg-type__name">{t.label}</span>
+                <span className="sg-type__blurb">{t.blurb}</span>
+                <span className="sg-type__img">
+                  <img src={t.image} alt="" loading="lazy" />
+                </span>
+                <span className="sg-type__go">
+                  <Icon name="arrow" size={22} />
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {featured.length > 0 && (
-        <section className="section section--tint" aria-labelledby="featured-title">
-          <div className="container">
-            <div className="section__head reveal">
+        <section className="sg-section sg-asphalt" aria-labelledby="featured-title">
+          <div className="sg-wrap">
+            <div className="sg-head sg-head--row reveal">
               <div>
-                <p className="eyebrow">Popular picks</p>
-                <h2 id="featured-title">Cars we recommend</h2>
+                <p className="sg-kicker">Driver's picks</p>
+                <h2 id="featured-title">
+                  The ones people <em>keep booking</em>
+                </h2>
               </div>
-              <a className="link-arrow" href="#fleet">
-                Show all cars <Icon name="arrow" size={16} />
+              <a className="sg-link" href="#fleet">
+                See the whole fleet <Icon name="arrow" size={16} />
               </a>
             </div>
-            <div className="car-grid">
+            <div className="sg-grid">
               {featured.slice(0, 4).map((car, i) => (
                 <div key={car.id} className="reveal" style={{ '--i': i }}>
                   <CarCard car={car} days={days} onBook={setBookingCar} />
@@ -240,23 +306,22 @@ export default function Home() {
         </section>
       )}
 
-      <main id="fleet" className="section container">
-        <div className="section__head reveal">
+      <main id="fleet" className="sg-section sg-wrap">
+        <div className="sg-head sg-head--row reveal">
           <div>
-            <p className="eyebrow">Our fleet</p>
-            <h2>{type ? `${typeLabel(type)} cars` : 'All cars'}</h2>
+            <p className="sg-kicker">The fleet</p>
+            <h2>{type ? <>{typeLabel(type)} cars</> : <>Every car, <em>one place</em></>}</h2>
           </div>
         </div>
 
         {trip && (
-          <div className="trip-bar">
+          <div className="sg-tripbar">
             <span>
               <Icon name="calendar" size={16} />
               {shortDate(trip.startDate)} {trip.pickupTime} → {shortDate(trip.endDate)} {trip.dropoffTime}
               {days > 0 && (
                 <strong>
-                  {' '}
-                  · {days} {days === 1 ? 'day' : 'days'}
+                  {days} {days === 1 ? 'day' : 'days'}
                 </strong>
               )}
             </span>
@@ -267,17 +332,18 @@ export default function Home() {
                 {trip.dropoffLocation && trip.dropoffLocation !== trip.pickupLocation && ` → ${trip.dropoffLocation}`}
               </span>
             )}
-            <button className="link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              Change
+            <button className="sg-textbtn" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              Change trip
             </button>
           </div>
         )}
 
-        <nav className="tabs" aria-label="Car types">
+        <nav className="sg-filters" aria-label="Car types">
           {[{ value: '', label: 'All' }, ...CAR_TYPES].map((t) => (
             <button
               key={t.value || 'all'}
-              className={`tab ${type === t.value ? 'tab--active' : ''}`}
+              className={`sg-filter ${type === t.value ? 'is-active' : ''}`}
+              aria-pressed={type === t.value}
               onClick={() => setType(t.value)}
             >
               {t.label}
@@ -286,25 +352,25 @@ export default function Home() {
         </nav>
 
         {error && (
-          <div className="alert alert--error">
+          <div className="sg-note sg-note--error">
             {error}{' '}
-            <button className="link" onClick={() => load(type, 1)}>
+            <button className="sg-textbtn" onClick={() => load(type, 1)}>
               Try again
             </button>
           </div>
         )}
 
         {!error && !loading && cars.length === 0 && (
-          <div className="empty">
-            <Icon name="car" size={40} />
-            <p>No {type ? typeLabel(type).toLowerCase() + ' ' : ''}cars available right now.</p>
+          <div className="sg-empty">
+            <p className="sg-empty__big">Nothing parked here right now.</p>
             <p>
-              Call us on <a href={telHref(CONTACT_PHONE)}>{CONTACT_PHONE}</a> and we'll help you find one.
+              Call us on <a href={telHref(CONTACT_PHONE)}>{CONTACT_PHONE}</a> and we'll help you find a{' '}
+              {type ? typeLabel(type).toLowerCase() : 'car'}.
             </p>
           </div>
         )}
 
-        <div className="car-grid">
+        <div className="sg-grid">
           {cars.map((car, i) => (
             <div key={car.id} className="reveal" style={{ '--i': i % 4 }}>
               <CarCard car={car} days={days} onBook={setBookingCar} />
@@ -312,110 +378,112 @@ export default function Home() {
           ))}
           {loading &&
             page === 1 &&
-            Array.from({ length: 4 }, (_, i) => <div key={i} className="car-card car-card--skeleton" />)}
+            Array.from({ length: 4 }, (_, i) => <div key={i} className="sg-ticket sg-ticket--skeleton" />)}
         </div>
 
         {page < totalPages && (
-          <div className="center">
-            <button className="btn btn--ghost" disabled={loading} onClick={() => load(type, page + 1)}>
+          <div className="sg-more">
+            <button className="sg-btn sg-btn--outline" disabled={loading} onClick={() => load(type, page + 1)}>
               {loading ? 'Loading…' : 'Show more cars'}
             </button>
           </div>
         )}
       </main>
 
-      <section id="why" className="section section--tint" aria-labelledby="why-title">
-        <div className="container">
-          <div className="section__head section__head--center reveal">
-            <div>
-              <p className="eyebrow">Why SafarGo</p>
-              <h2 id="why-title">Renting a car made simple</h2>
-            </div>
+      <section id="how" className="sg-road" aria-labelledby="how-title">
+        <div className="sg-wrap">
+          <div className="sg-head reveal">
+            <p className="sg-kicker">How it works</p>
+            <h2 id="how-title">
+              Four milestones to the <em>open road</em>
+            </h2>
           </div>
-          <div className="benefit-grid">
-            {BENEFITS.map((b, i) => (
-              <div key={b.title} className="benefit reveal" style={{ '--i': i % 3 }}>
-                <span className="benefit__icon">
-                  <Icon name={b.icon} size={24} />
+          <ol className="sg-road__steps">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="reveal" style={{ '--i': i }}>
+                <span className="sg-stone sg-stone--sm" aria-hidden="true">
+                  <span>Step</span>
+                  <strong>{i + 1}</strong>
                 </span>
-                <h3>{b.title}</h3>
-                <p>{b.text}</p>
-              </div>
+                <div>
+                  <h3>{s.title}</h3>
+                  <p>{s.text}</p>
+                </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
+        <div className="sg-road__lane" aria-hidden="true" />
       </section>
 
-      <section id="how" className="section container" aria-labelledby="how-title">
-        <div className="section__head section__head--center reveal">
-          <div>
-            <p className="eyebrow">How it works</p>
-            <h2 id="how-title">On the road in four steps</h2>
-          </div>
+      <section id="why" className="sg-section sg-wrap sg-why" aria-labelledby="why-title">
+        <div className="sg-why__lead reveal">
+          <p className="sg-kicker">Why SafarGo</p>
+          <h2 id="why-title">
+            No accounts. No advance. <em>Just a call, and the keys.</em>
+          </h2>
         </div>
-        <ol className="steps">
-          {STEPS.map((s, i) => (
-            <li key={s.title} className="step reveal" style={{ '--i': i }}>
-              <span className="step__num">{i + 1}</span>
-              <span className="step__icon">
-                <Icon name={s.icon} size={22} />
-              </span>
-              <h3>{s.title}</h3>
-              <p>{s.text}</p>
+        <ol className="sg-why__list">
+          {BENEFITS.map((b, i) => (
+            <li key={b.title} className="reveal" style={{ '--i': i % 2 }}>
+              <span>{pad(i + 1)}</span>
+              <h3>{b.title}</h3>
+              <p>{b.text}</p>
             </li>
           ))}
         </ol>
       </section>
 
-      <section className="cta">
-        <div className="container cta__inner reveal">
-          <div>
-            <h2>Not sure which car to pick?</h2>
-            <p>Tell us about your trip and we'll suggest the right car and price.</p>
-          </div>
-          <div className="cta__actions">
-            <a href={telHref(CONTACT_PHONE)} className="btn btn--primary btn--lg">
-              <Icon name="phone" size={18} /> Call {CONTACT_PHONE}
+      <section className="sg-call">
+        <div className="sg-wrap sg-call__inner reveal">
+          <p className="sg-kicker">Not sure which car to pick?</p>
+          <h2>
+            Tell us about your trip. <em>We'll find the car.</em>
+          </h2>
+          <a className="sg-call__number" href={telHref(CONTACT_PHONE)}>
+            {CONTACT_PHONE}
+            <Icon name="arrow" size={36} />
+          </a>
+          {WHATSAPP_NUMBER && (
+            <a
+              href={whatsappHref(WHATSAPP_NUMBER, 'Hi, I want to rent a car')}
+              className="sg-btn sg-btn--whatsapp"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Icon name="chat" size={18} /> Or message us on WhatsApp
             </a>
-            {WHATSAPP_NUMBER && (
-              <a
-                href={whatsappHref(WHATSAPP_NUMBER, 'Hi, I want to rent a car')}
-                className="btn btn--whatsapp btn--lg"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Icon name="chat" size={18} /> WhatsApp us
-              </a>
-            )}
-          </div>
+          )}
         </div>
       </section>
 
-      <section id="faq" className="section container faq-wrap" aria-labelledby="faq-title">
-        <div className="section__head section__head--center reveal">
-          <div>
-            <p className="eyebrow">FAQs</p>
-            <h2 id="faq-title">Questions people ask</h2>
-          </div>
+      <section id="faq" className="sg-section sg-wrap sg-faq" aria-labelledby="faq-title">
+        <div className="sg-faq__head reveal">
+          <p className="sg-kicker">FAQs</p>
+          <h2 id="faq-title">
+            Questions people <em>ask us</em>
+          </h2>
+          <p>
+            Something else? Call <a href={telHref(CONTACT_PHONE)}>{CONTACT_PHONE}</a>.
+          </p>
         </div>
-        <div className="faq">
+        <div className="sg-faq__list">
           {FAQS.map((f, i) => (
             <details key={f.q} className="reveal" style={{ '--i': i }}>
-              <summary>{f.q}</summary>
+              <summary>
+                <span>{pad(i + 1)}</span>
+                {f.q}
+                <i aria-hidden="true" />
+              </summary>
               <p>{f.a}</p>
             </details>
           ))}
         </div>
       </section>
 
-      <footer className="site-footer">
-        <div className="container site-footer__grid">
-          <div>
-            <a href="/" className="logo">
-              Safar<span>Go</span>
-            </a>
-            <p>Self-drive car rentals for city trips, weekends away and long journeys.</p>
-          </div>
+      <footer className="sg-footer">
+        <div className="sg-wrap sg-footer__grid">
+          <p className="sg-footer__about">Self-drive car rentals for city trips, weekends away and long journeys.</p>
           <div>
             <h3>Explore</h3>
             {NAV.map((n) => (
@@ -427,39 +495,43 @@ export default function Home() {
           <div>
             <h3>Car types</h3>
             {CAR_TYPES.map((t) => (
-              <button key={t.value} className="link" onClick={() => pickType(t.value)}>
+              <button key={t.value} onClick={() => pickType(t.value)}>
                 {t.label}
               </button>
             ))}
           </div>
           <div>
             <h3>Contact</h3>
-            <a href={telHref(CONTACT_PHONE)}>
-              <Icon name="phone" size={16} /> {CONTACT_PHONE}
-            </a>
+            <a href={telHref(CONTACT_PHONE)}>{CONTACT_PHONE}</a>
             {WHATSAPP_NUMBER && (
               <a href={whatsappHref(WHATSAPP_NUMBER)} target="_blank" rel="noreferrer">
-                <Icon name="chat" size={16} /> WhatsApp
+                WhatsApp
               </a>
             )}
           </div>
         </div>
-        <div className="container site-footer__bottom">© {YEAR} SafarGo Rentals. All rights reserved.</div>
+        <p className="sg-footer__word" aria-hidden="true">
+          Safar<span>Go</span>
+        </p>
+        <div className="sg-wrap sg-footer__bottom">
+          <span>© {YEAR} SafarGo Rentals</span>
+          <span>Drive safe. Come back with stories.</span>
+        </div>
       </footer>
 
       {WHATSAPP_NUMBER && (
         <a
-          className="whatsapp-float"
+          className="sg-wa"
           href={whatsappHref(WHATSAPP_NUMBER, 'Hi, I want to rent a car')}
           target="_blank"
           rel="noreferrer"
           aria-label="Chat on WhatsApp"
         >
-          <Icon name="chat" size={26} />
+          <Icon name="chat" size={24} />
         </a>
       )}
 
       {bookingCar && <EnquiryModal car={bookingCar} trip={trip} onClose={closeModal} />}
-    </>
+    </div>
   )
 }
