@@ -1,11 +1,13 @@
 // Car types are a fixed list in the backend (see CAR_TYPES in adminCars.js).
+// Each type has a stock photo (public/images) used for the category cards and
+// as a sample photo for cars that have no images yet.
 export const CAR_TYPES = [
-  { value: 'suv', label: 'SUV' },
-  { value: 'sedan', label: 'Sedan' },
-  { value: 'hatchback', label: 'Hatchback' },
-  { value: 'van', label: 'Van' },
-  { value: 'luxury', label: 'Luxury' },
-  { value: 'pickup', label: 'Pickup' },
+  { value: 'suv', label: 'SUV', image: '/images/suv.webp', blurb: 'Room for family and luggage' },
+  { value: 'sedan', label: 'Sedan', image: '/images/sedan.webp', blurb: 'Comfort for city and highway' },
+  { value: 'hatchback', label: 'Hatchback', image: '/images/hatchback.webp', blurb: 'Easy to park, light on fuel' },
+  { value: 'van', label: 'Van', image: '/images/van.webp', blurb: 'For groups and long trips' },
+  { value: 'luxury', label: 'Luxury', image: '/images/luxury.webp', blurb: 'For weddings and special days' },
+  { value: 'pickup', label: 'Pickup', image: '/images/pickup.webp', blurb: 'Tough roads and cargo' },
 ]
 
 export const TRANSMISSIONS = ['manual', 'automatic']
@@ -19,8 +21,12 @@ export const ENQUIRY_STATUSES = [
   { value: 'closed', label: 'Closed' },
 ]
 
-export const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+92 300 0000000'
+export const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+91 98765 43210'
 export const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || ''
+
+export function typeImage(value) {
+  return CAR_TYPES.find((t) => t.value === value)?.image || '/images/sedan.webp'
+}
 
 export function typeLabel(value) {
   return CAR_TYPES.find((t) => t.value === value)?.label || value || 'Other'
@@ -30,8 +36,11 @@ export function capitalize(s) {
   return s ? s[0].toUpperCase() + s.slice(1) : ''
 }
 
-export function formatPrice(amount, currency = 'PKR') {
-  return `${currency} ${Number(amount).toLocaleString('en-US')}`
+// INR shows as "₹4,500" with Indian digit grouping (₹1,00,000).
+export function formatPrice(amount, currency = 'INR') {
+  const n = Number(amount)
+  if (currency === 'INR') return `₹${n.toLocaleString('en-IN')}`
+  return `${currency} ${n.toLocaleString('en-US')}`
 }
 
 export function telHref(phone) {
@@ -41,4 +50,29 @@ export function telHref(phone) {
 export function whatsappHref(phone, text = '') {
   const digits = phone.replace(/\D/g, '')
   return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ''}`
+}
+
+export function todayString(offsetDays = 0) {
+  const t = new Date()
+  t.setDate(t.getDate() + offsetDays)
+  const mm = String(t.getMonth() + 1).padStart(2, '0')
+  const dd = String(t.getDate()).padStart(2, '0')
+  return `${t.getFullYear()}-${mm}-${dd}`
+}
+
+// Rental days between two date+time pairs, rounded up, at least 1.
+export function rentalDays(trip) {
+  if (!trip?.startDate || !trip?.endDate) return 0
+  const start = new Date(`${trip.startDate}T${trip.pickupTime || '10:00'}`)
+  const end = new Date(`${trip.endDate}T${trip.dropoffTime || '10:00'}`)
+  const ms = end - start
+  if (!(ms > 0)) return trip.endDate === trip.startDate ? 1 : 0
+  return Math.max(1, Math.ceil(ms / 86400000))
+}
+
+// '2026-10-10' -> '10 Oct'
+export function shortDate(value) {
+  if (!value) return ''
+  const [y, m, d] = value.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }

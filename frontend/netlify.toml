@@ -1,0 +1,25 @@
+# Netlify settings for the SafarGo frontend.
+# In Netlify set "Base directory" to: frontend
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Forward API calls to the Render backend. The browser only ever talks to
+# Netlify, so the admin login cookie stays same-site.
+# Replace the URL with your Render web service's address.
+[[redirects]]
+  from = "/api/*"
+  to = "https://YOUR-RENDER-SERVICE.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# Single-page app: every other path loads index.html and React Router
+# shows the right page (/admin, /admin/dashboard, ...).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

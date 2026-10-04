@@ -36,7 +36,7 @@ const adminCarSchema = z.object({
     .string()
     .trim()
     .regex(/^[A-Z]{3}$/, 'Currency must be 3 uppercase letters')
-    .default('PKR'),
+    .default('INR'),
   images: z
     .array(
       z

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS cars (
   transmission TEXT,
   fuel TEXT,
   price_per_day NUMERIC NOT NULL CHECK (price_per_day >= 0),
-  currency TEXT NOT NULL DEFAULT 'PKR',
+  currency TEXT NOT NULL DEFAULT 'INR',
   images TEXT[] NOT NULL DEFAULT '{}',
   description TEXT,
   is_featured BOOLEAN NOT NULL DEFAULT FALSE,
@@ -56,3 +56,7 @@ CREATE INDEX IF NOT EXISTS idx_cars_is_featured ON cars (is_featured);
 CREATE INDEX IF NOT EXISTS idx_cars_type ON cars (type);
 CREATE INDEX IF NOT EXISTS idx_enquiries_status ON enquiries (status);
 CREATE INDEX IF NOT EXISTS idx_enquiries_created_at ON enquiries (created_at);
+
+-- Prices are in Indian rupees. Tables created before this change had a
+-- 'PKR' default; this keeps them in line (safe to run repeatedly).
+ALTER TABLE cars ALTER COLUMN currency SET DEFAULT 'INR';
