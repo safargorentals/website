@@ -148,6 +148,7 @@ async function createEnquiry(req, res, next) {
     // Tell the site owner about the new enquiry WITHOUT making the customer
     // wait: this is deliberately NOT awaited, and notifyNewEnquiry() handles
     // all of its own errors, so email problems can never fail the enquiry.
+    // The extra .catch() is belt-and-braces against an unhandled rejection.
     notifyNewEnquiry({
       name: data.name,
       phone: data.phone,
@@ -161,7 +162,7 @@ async function createEnquiry(req, res, next) {
       pickupTime: data.pickupTime,
       dropoffTime: data.dropoffTime,
       message: data.message || null,
-    });
+    }).catch(() => {});
 
     res.status(201).json({ id: saved.id, message: 'Enquiry received' });
   } catch (err) {

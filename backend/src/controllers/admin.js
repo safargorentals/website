@@ -48,6 +48,7 @@ async function login(req, res, next) {
     // Sign a JWT holding ONLY the admin id, valid for 8 hours,
     // and send it as an httpOnly cookie - never in the JSON body.
     const token = jwt.sign({ id: admin.id }, env.jwtSecret, {
+      algorithm: 'HS256',
       expiresIn: env.tokenTtlSeconds,
     });
     res.cookie(env.cookieOptions.name, token, env.cookieOptions);

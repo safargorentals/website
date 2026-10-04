@@ -50,12 +50,13 @@ async function uploadCarImages(req, res, next) {
 
     // Validate EVERY file before uploading anything, so one bad file
     // cannot leave a half-uploaded set behind.
+    // The error never echoes the file name.
     for (const file of files) {
       const claimed = ALLOWED_MIME_TYPES[file.mimetype];
       const actual = detectImageType(file.buffer);
       if (!claimed || !actual || claimed !== actual) {
         return res.status(400).json({
-          error: `File "${file.originalname}" is not a real JPEG, PNG or WebP image`,
+          error: 'Invalid image: only real JPEG, PNG or WebP images are allowed',
         });
       }
     }
@@ -72,6 +73,10 @@ async function uploadCarImages(req, res, next) {
         resource_type: 'image',
         quality: 'auto',
         fetch_format: 'auto',
+        // Strip EXIF/GPS metadata from the stored image (location, camera
+        // details) and don't return it in the response.
+        strip: true,
+        image_metadata: false,
       });
       urls.push(result.secure_url);
     }

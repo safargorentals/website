@@ -27,7 +27,12 @@ All responses are JSON. Car objects always use this shape (camelCase,
 
 ### GET /api/cars
 
-List cars. All query params are optional:
+List cars. All query params are optional. Every search/filter string
+(`type`, `brand`, `transmission`, `fuel`, `search`) is capped at 100 chars.
+
+Rate limited to **300 requests per 15 minutes per IP** (other API routes:
+100 per 15 minutes; login 5 per 15 minutes; enquiries 5 per hour;
+uploads 30 per 15 minutes).
 
 | Param | Type | Default | Notes |
 |---|---|---|---|
@@ -269,9 +274,11 @@ Required: `name` (2-100 chars), `brand` (2-50), `type`
 (`petrol`|`diesel`|`hybrid`|`electric`|`cng`), `pricePerDay` (0-1000000).
 
 Optional: `currency` (3 uppercase letters, default `"INR"`), `images`
-(max 10, each must start with `https://`, default `[]`), `description`
+(max 10, each must start with `https://res.cloudinary.com/<CLOUDINARY_CLOUD_NAME>/`,
+default `[]`), `description`
 (max 2000 chars), `isAvailable` (default `true`).
 (There is no `isFeatured` here - featuring is a separate PATCH below.)
+Unknown fields are rejected with 400.
 
 Example request:
 
@@ -339,7 +346,8 @@ Send `multipart/form-data` with field name `images`: up to 5 files,
 max 5 MB each, JPEG/PNG/WebP only. Files are checked by their real
 content (magic bytes), not just the extension, and are never written to
 disk. Each file goes to the `safargo/cars` folder on Cloudinary with
-automatic quality/format optimization and a random file name.
+automatic quality/format optimization, EXIF/metadata stripping and
+a random file name. Upload errors never echo the file name.
 
 Example:
 
@@ -365,7 +373,7 @@ clean `400`/`413` JSON, never a stack trace:
 
 Upload FIRST, then paste the returned URLs into the car create/update
 body (`images` array, max 10 per car). The car endpoints only accept
-`https://res.cloudinary.com/...` URLs - anything else is rejected with 400.
+`https://res.cloudinary.com/<CLOUDINARY_CLOUD_NAME>/...` URLs - anything else is rejected with 400.
 
 ## Admin enquiry management
 
@@ -376,7 +384,7 @@ All routes start with `/api/admin/enquiries` and require an admin session
 
 Newest first. Optional query params: `status`
 (`new`|`contacted`|`confirmed`|`closed`), `search` (matches name, phone or
-email, case-insensitive), `carId`, `from`/`to` (filter by created date,
+email, case-insensitive, max 100 chars), `carId`, `from`/`to` (filter by created date,
 `YYYY-MM-DD`, both ends inclusive), `page` (default 1), `limit`
 (default 20, max 100).
 
@@ -496,4 +504,10 @@ Invalid input returns 400 with the invalid field(s) listed:
 
 ```json
 { "error": "Invalid car id", "fields": { "id": "Invalid input: expected number, received NaN" } }
+```
+
+Unknown routes return a generic 404 that never echoes the URL:
+
+```json
+{ "error": "Not found" }
 ```

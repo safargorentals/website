@@ -60,13 +60,27 @@ app.use(
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
-// Limit how many API requests a client can make (100 per 15 minutes)
+// General API limit: 100 requests per 15 minutes per IP.
+// Public car browsing (GET /api/cars*) has its own generous limiter below,
+// so skip those GETs here to avoid double-counting them.
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 100,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  skip: (req) => req.method === 'GET' && req.originalUrl.startsWith('/api/cars'),
 });
+// Public car browsing is read-only and high-traffic:
+// 300 requests per 15 minutes per IP. Stricter limits stay on
+// login (5/15min), enquiries (5/hour) and uploads (30/15min).
+const publicCarsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  skip: (req) => req.method !== 'GET',
+});
+app.use('/api/cars', publicCarsLimiter);
 app.use('/api', apiLimiter);
 
 // All /api routes live in src/routes
@@ -92,8 +106,14 @@ app.use(notFound);
 app.use(errorHandler);
 
 const port = env.port;
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`SafarGo API listening on port ${port}`);
+});
+// Clean one-line message instead of an unhandled 'error' crash
+// (e.g. port already in use).
+server.on('error', (err) => {
+  console.error(`SafarGo API failed to start on port ${port}: ${err.message}`);
+  process.exit(1);
 });
 
 module.exports = app;

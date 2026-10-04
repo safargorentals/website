@@ -13,15 +13,17 @@ function isRealDate(value) {
 
 const listQuerySchema = z.object({
   status: z.enum(ENQUIRY_STATUSES).optional(),
-  search: z.string().trim().min(1).optional(),
+  search: z.string().trim().min(1).max(100).optional(),
   carId: z.coerce.number().int().min(1).optional(),
   from: z
     .string()
+    .max(100)
     .regex(DATE_RE, 'from must be in YYYY-MM-DD format')
     .refine(isRealDate, 'from must be a real calendar date')
     .optional(),
   to: z
     .string()
+    .max(100)
     .regex(DATE_RE, 'to must be in YYYY-MM-DD format')
     .refine(isRealDate, 'to must be a real calendar date')
     .optional(),

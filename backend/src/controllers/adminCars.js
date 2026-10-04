@@ -1,5 +1,6 @@
 const { z } = require('zod');
 const carsModel = require('../models/cars');
+const env = require('../config/env');
 
 const CAR_TYPES = ['sedan', 'suv', 'hatchback', 'van', 'luxury', 'pickup'];
 const TRANSMISSIONS = ['manual', 'automatic'];
@@ -10,8 +11,20 @@ const priceSchema = z
   .min(0, 'pricePerDay must be at least 0')
   .max(1000000, 'pricePerDay must be at most 1000000');
 
-// Full validation for creating a car. Extra keys are ignored here
-// (the model only writes whitelisted columns), but PUT uses strict mode.
+// Car images must live on our own Cloudinary account: the URL has to start
+// with https://res.cloudinary.com/<CLOUDINARY_CLOUD_NAME>/ so an admin
+// cannot paste images from random hosts.
+const CLOUD_IMAGE_PREFIX = env.cloudinaryCloudName
+  ? `https://res.cloudinary.com/${env.cloudinaryCloudName}/`
+  : 'https://res.cloudinary.com/';
+const carImageUrlSchema = z
+  .string()
+  .refine((v) => v.startsWith(CLOUD_IMAGE_PREFIX), {
+    message: `Image URLs must start with ${CLOUD_IMAGE_PREFIX} (upload them with POST /api/admin/uploads first)`,
+  });
+
+// Full validation for creating a car. .strict() rejects unknown fields
+// (id, created_at, ...) just like PUT does.
 const adminCarSchema = z.object({
   name: z
     .string()
@@ -38,14 +51,7 @@ const adminCarSchema = z.object({
     .regex(/^[A-Z]{3}$/, 'Currency must be 3 uppercase letters')
     .default('INR'),
   images: z
-    .array(
-      z
-        .string()
-        .regex(
-          /^https:\/\/res\.cloudinary\.com\/.+/,
-          'Image URLs must be https:// links from res.cloudinary.com (upload them with POST /api/admin/uploads first)'
-        )
-    )
+    .array(carImageUrlSchema)
     .max(10, 'At most 10 images are allowed')
     .default([]),
   description: z
@@ -54,7 +60,7 @@ const adminCarSchema = z.object({
     .max(2000, 'Description must be at most 2000 characters')
     .optional(),
   isAvailable: z.boolean().default(true),
-});
+}).strict();
 
 // Partial update: same rules for provided fields, unknown fields rejected
 const adminCarUpdateSchema = adminCarSchema.partial().strict();

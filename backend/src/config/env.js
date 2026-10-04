@@ -23,9 +23,24 @@ const env = {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean),
-  // How many proxies sit in front of the app. 1 = Render only; 2 when the
-  // frontend host (e.g. Netlify) also proxies /api to us.
-  trustProxyHops: Number(process.env.TRUST_PROXY_HOPS) || 1,
+  // How many proxies sit in front of the app.
+  // TRUST_PROXY_HOPS must be a whole number from 0 to 3.
+  // Default is 1 in production (Render proxy) and 0 in development (no proxy).
+  // Set to 2 when the frontend host (e.g. Netlify) also proxies /api to us.
+  // Express trusts exactly that many hops so rate limiting sees the real
+  // client IP instead of a proxy's. Trusting too many hops lets a client
+  // spoof its IP via X-Forwarded-For.
+  trustProxyHops: (() => {
+    const def = isProduction ? 1 : 0;
+    const raw = process.env.TRUST_PROXY_HOPS;
+    if (raw === undefined || raw === '') return def;
+    const s = String(raw).trim();
+    if (/^[0-3]$/.test(s)) return Number(s);
+    console.warn(
+      `TRUST_PROXY_HOPS must be a whole number from 0 to 3 (got "${s}"). Using default ${def}.`
+    );
+    return def;
+  })(),
   // Cloudinary image uploads (admin only). Read from the environment,
   // never hardcoded anywhere.
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
@@ -81,5 +96,8 @@ if (!env.jwtSecret) {
 if (!env.databaseUrl) {
   console.warn('DATABASE_URL is not set. Database access is disabled.');
 }
+
+// Startup line so the active proxy trust setting is always visible.
+console.log(`Trust proxy hops: ${env.trustProxyHops}`);
 
 module.exports = env;

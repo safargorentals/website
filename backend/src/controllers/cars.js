@@ -3,12 +3,13 @@ const carsModel = require('../models/cars');
 
 // What GET /api/cars is allowed to receive. Query params arrive as strings,
 // so page/limit are coerced to numbers first.
+// Every search/filter string is capped at 100 chars to bound DB LIKE work.
 const listQuerySchema = z.object({
-  type: z.string().min(1).optional(),
-  brand: z.string().min(1).optional(),
-  transmission: z.string().min(1).optional(),
-  fuel: z.string().min(1).optional(),
-  search: z.string().min(1).optional(),
+  type: z.string().min(1).max(100).optional(),
+  brand: z.string().min(1).max(100).optional(),
+  transmission: z.string().min(1).max(100).optional(),
+  fuel: z.string().min(1).max(100).optional(),
+  search: z.string().min(1).max(100).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(12),
 });

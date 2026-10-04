@@ -15,7 +15,9 @@ async function requireAdmin(req, res, next) {
 
     let payload;
     try {
-      payload = jwt.verify(token, env.jwtSecret);
+      // The algorithm is pinned: only HS256 tokens are accepted, so a token
+      // claiming any other algorithm (or "none") is rejected outright.
+      payload = jwt.verify(token, env.jwtSecret, { algorithms: ['HS256'] });
     } catch (err) {
       // Bad signature, expired, or malformed - all the same to the client
       return res.status(401).json({ error: 'Unauthorized' });
