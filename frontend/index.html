@@ -16,6 +16,13 @@
       rel="stylesheet"
     />
     <link rel="preload" as="image" href="/images/hero.webp" />
+    <!-- Apply a saved light/dark choice before the first paint (see src/theme.js) -->
+    <script>
+      try {
+        var t = localStorage.getItem('sg-theme')
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
     <title>SafarGo Rentals | Self-drive car rental</title>
   </head>
   <body>

@@ -26,8 +26,10 @@
   --sg-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
+/* Dark theme: follows the system setting unless the visitor picked a theme
+   with the header toggle, which sets data-theme on <html> (see index.html). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --sg-paper: #111512;
     --sg-paper-2: #1b211d;
     --sg-card: #181d1a;
@@ -44,11 +46,30 @@
   }
 }
 
+:root[data-theme='dark'] {
+  --sg-paper: #111512;
+  --sg-paper-2: #1b211d;
+  --sg-card: #181d1a;
+  --sg-ink: #f2ebdc;
+  --sg-ink-2: #c4c2b8;
+  --sg-muted: #8d948d;
+  --sg-line: #2d3530;
+  --sg-yellow: #f7c234;
+  --sg-green: #6cc79a;
+  --sg-red: #ff8a5c;
+  --sg-night: #1c231f;
+  --sg-night-2: #29312c;
+  --sg-shadow: rgba(0, 0, 0, 0.7);
+}
+
 body:has(.sg) {
   background: var(--sg-paper);
 }
 
 .sg {
+  transition:
+    background-color 0.3s,
+    color 0.3s;
   flex: 1;
   overflow-x: clip;
   background: var(--sg-paper);
@@ -394,6 +415,31 @@ body:has(.sg) {
   color: var(--sg-muted);
 }
 
+.sg-theme {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-right: -20px;
+  border: 1.5px solid var(--sg-line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sg-ink);
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s,
+    transform 0.4s var(--sg-ease);
+}
+
+.sg-theme:hover {
+  border-color: var(--sg-ink);
+  background: var(--sg-yellow);
+  color: #17201b;
+  transform: rotate(-20deg);
+}
+
 .sg-header__menu {
   display: none;
   padding: 6px;
@@ -406,6 +452,9 @@ body:has(.sg) {
 @media (max-width: 900px) {
   .sg-header__inner {
     gap: 12px;
+  }
+  .sg-theme {
+    margin-right: 0;
   }
   .sg-header__menu {
     display: inline-flex;

@@ -41,8 +41,10 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Dark theme: follows the system setting unless the visitor picked a theme
+   with the header toggle, which sets data-theme on <html> (see index.html). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #111317;
     --surface: #1a1d23;
     --surface-2: #23272f;
@@ -72,6 +74,37 @@
 
     color-scheme: dark;
   }
+}
+
+:root[data-theme='dark'] {
+  --bg: #111317;
+  --surface: #1a1d23;
+  --surface-2: #23272f;
+  --text: #c3c7cf;
+  --text-h: #f3f4f6;
+  --muted: #8b919c;
+  --border: #2d3139;
+
+  --primary: #ff7a2e;
+  --primary-hover: #ff8c4a;
+  --primary-text: #1a0d04;
+  --primary-soft: rgba(255, 122, 46, 0.15);
+
+  --hero-bg: #0c1426;
+
+  --danger: #ff6b6b;
+  --danger-soft: rgba(255, 107, 107, 0.14);
+  --green: #51cf66;
+  --green-soft: rgba(81, 207, 102, 0.14);
+  --amber: #fcc419;
+  --amber-soft: rgba(252, 196, 25, 0.14);
+  --blue: #74a9ff;
+  --blue-soft: rgba(116, 169, 255, 0.14);
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.6);
+
+  color-scheme: dark;
 }
 
 *,

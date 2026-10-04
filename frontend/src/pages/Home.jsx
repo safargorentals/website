@@ -5,6 +5,7 @@ import EnquiryModal from '../components/EnquiryModal.jsx'
 import Icon from '../components/Icon.jsx'
 import SearchWidget from '../components/SearchWidget.jsx'
 import useReveal from '../useReveal.js'
+import useTheme from '../theme.js'
 import {
   CAR_TYPES,
   CONTACT_PHONE,
@@ -108,6 +109,7 @@ export default function Home() {
   const [bookingCar, setBookingCar] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [theme, toggleTheme] = useTheme()
 
   const load = useCallback(async (selectedType, pageNum) => {
     setLoading(true)
@@ -195,6 +197,14 @@ export default function Home() {
               </a>
             ))}
           </nav>
+          <button
+            className="sg-theme"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            title={theme === 'dark' ? 'Light theme' : 'Dark theme'}
+          >
+            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
+          </button>
           <a href={telHref(CONTACT_PHONE)} className="sg-btn sg-btn--ink sg-header__call">
             <Icon name="phone" size={16} /> <span>{CONTACT_PHONE}</span>
           </a>
