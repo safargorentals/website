@@ -1,4 +1,4 @@
--- SafarGo database schema
+-- Drive Kochi database schema
 -- Apply with: npm run db:init
 -- Safe to run multiple times (IF NOT EXISTS everywhere).
 

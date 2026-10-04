@@ -25,7 +25,7 @@ function buildTextBody(e) {
   const base = (env.adminUrl || '').replace(/\/+$/, '');
   const adminLink = base ? `${base}/admin/enquiries` : '(admin link not configured)';
   return [
-    'A new enquiry was submitted on SafarGo.',
+    'A new enquiry was submitted on Drive Kochi.',
     '',
     line('Name', e.name),
     line('Phone', e.phone),

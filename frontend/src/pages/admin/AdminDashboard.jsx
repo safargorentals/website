@@ -35,7 +35,7 @@ export default function AdminDashboard() {
       <header className="admin__header">
         <div className="container admin__header-inner">
           <a href="/" className="logo">
-            Safar<span>Go</span> <small>Admin</small>
+            Drive<span>Kochi</span> <small>Admin</small>
           </a>
           <div className="admin__user">
             <span>{email}</span>

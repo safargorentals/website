@@ -1,7 +1,7 @@
 {
   "name": "safargo-backend",
   "version": "1.0.0",
-  "description": "SafarGo car rental enquiry API",
+  "description": "Drive Kochi car rental enquiry API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

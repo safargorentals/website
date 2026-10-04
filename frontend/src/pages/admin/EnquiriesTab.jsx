@@ -175,7 +175,7 @@ export default function EnquiriesTab({ onUnauthorized }) {
                 </a>
                 <a
                   className="btn btn--whatsapp btn--sm"
-                  href={whatsappHref(e.phone, `Hi ${e.name}, this is SafarGo about your ${e.carName || 'car'} enquiry.`)}
+                  href={whatsappHref(e.phone, `Hi ${e.name}, this is Drive Kochi about your ${e.carName || 'car'} enquiry.`)}
                   target="_blank"
                   rel="noreferrer"
                 >

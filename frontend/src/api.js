@@ -1,4 +1,4 @@
-// Thin wrapper around fetch for the SafarGo API.
+// Thin wrapper around fetch for the Drive Kochi API.
 // The admin session is an httpOnly cookie, so every request sends credentials.
 const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 

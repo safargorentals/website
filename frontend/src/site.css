@@ -358,7 +358,7 @@ body:has(.sg) {
   text-decoration: none;
 }
 
-.sg-logo > span:last-child {
+.sg-logo__word span {
   color: var(--sg-green);
 }
 
@@ -1716,15 +1716,20 @@ body:has(.sg) {
   font-weight: 700;
 }
 
+.sg-faq__group + .sg-faq__group {
+  margin-top: 48px;
+}
+
+.sg-faq__group h3 {
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--sg-ink);
+  color: var(--sg-green);
+  font: 600 0.75rem/1 var(--sg-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 .sg-faq__list details {
-  border-top: 1px solid var(--sg-line);
-}
-
-.sg-faq__list details:first-child {
-  border-top: 2px solid var(--sg-ink);
-}
-
-.sg-faq__list details:last-child {
   border-bottom: 1px solid var(--sg-line);
 }
 
@@ -1870,7 +1875,7 @@ body:has(.sg) {
 .sg-footer__word {
   margin: 56px 0 -0.13em;
   color: color-mix(in srgb, var(--sg-night-text) 8%, var(--sg-night));
-  font-size: 31vw;
+  font-size: 20.5vw;
   font-weight: 800;
   font-stretch: 75%;
   line-height: 0.8;

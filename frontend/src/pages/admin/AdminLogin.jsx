@@ -34,7 +34,7 @@ export default function AdminLogin() {
     <div className="login-page">
       <form className="login-card" onSubmit={handleSubmit}>
         <a href="/" className="logo">
-          Safar<span>Go</span>
+          Drive<span>Kochi</span>
         </a>
         <h1>Admin login</h1>
 

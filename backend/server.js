@@ -78,7 +78,7 @@ app.use('/api', apiRoutes);
 const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
 if (!fs.existsSync(frontendDist)) {
   app.get('/', (req, res) => {
-    res.json({ name: 'SafarGo API', ok: true, health: '/api/health' });
+    res.json({ name: 'Drive Kochi API', ok: true, health: '/api/health' });
   });
 } else {
   app.use(express.static(frontendDist, { index: false }));
@@ -93,7 +93,7 @@ app.use(errorHandler);
 
 const port = env.port;
 app.listen(port, () => {
-  console.log(`SafarGo API listening on port ${port}`);
+  console.log(`Drive Kochi API listening on port ${port}`);
 });
 
 module.exports = app;

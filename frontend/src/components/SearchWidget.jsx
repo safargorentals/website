@@ -106,7 +106,7 @@ export default function SearchWidget({ initial, onSearch }) {
 
       <div className="sg-pass__stub">
         <span className="sg-pass__code" aria-hidden="true">
-          SG · {shortDate(form.startDate)}
+          DK · {shortDate(form.startDate)}
         </span>
         <button className="sg-btn sg-btn--yellow sg-btn--lg">
           <Icon name="search" size={18} /> Find cars

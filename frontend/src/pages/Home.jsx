@@ -49,26 +49,62 @@ const STEPS = [
   { title: 'Pick up and drive', text: 'Collect the keys and enjoy the journey.' },
 ]
 
-const FAQS = [
+// Grouped by topic; numbering runs on across the groups
+const FAQ_GROUPS = [
   {
-    q: 'How do I book a car?',
-    a: 'Choose a car, tap "Book" and fill in your dates, times and pickup and drop-off places. We will call you to confirm the booking.',
+    title: 'Booking and enquiries',
+    items: [
+      {
+        q: 'How do I book a car?',
+        a: "Send an enquiry through the site, or call or WhatsApp us. We'll confirm availability and the price, then finalise your booking.",
+      },
+      {
+        q: 'Do I pay online when I submit an enquiry?',
+        a: "No. Submitting an enquiry doesn't charge you or commit you to anything. Payment is arranged once we confirm your booking.",
+      },
+      {
+        q: 'How quickly will you reply?',
+        a: 'We aim to respond within 30-40 mins. For urgent bookings, please call us.',
+      },
+      {
+        q: 'How early should I book?',
+        a: 'We recommend booking 2-3 days ahead, and earlier for weekends, festivals and holiday season.',
+      },
+      {
+        q: 'Can I rent a car for just a few hours?',
+        a: 'Yes, hourly / half-day / full-day packages are available. Ask us for the options.',
+      },
+    ],
   },
   {
-    q: 'Do I pay when I send the request?',
-    a: 'No. Sending a booking request is free. We confirm the final price and how to pay when we call you.',
+    title: 'Eligibility and documents',
+    items: [
+      {
+        q: 'What documents do I need?',
+        a: 'A valid driving license, a government ID (Aadhaar, passport or voter ID), and [address proof, if required].',
+      },
+      {
+        q: 'What is the minimum age to rent?',
+        a: '21 years, with a license held for at least 1 year.',
+      },
+      {
+        q: 'Can foreign tourists rent a car?',
+        a: 'Yes, with a valid passport, visa and an International Driving Permit along with their home license.',
+      },
+    ],
   },
   {
-    q: 'What documents do I need?',
-    a: 'Usually a valid driving licence and a photo ID. We will tell you exactly what to bring when we confirm your booking.',
-  },
-  {
-    q: 'Can I return the car somewhere else?',
-    a: 'Yes. Untick "Return to the same place" and enter a different drop-off place. We will confirm it when we call.',
-  },
-  {
-    q: 'What does the price per day include?',
-    a: 'Each car shows its daily rate. The total shown for your dates is an estimate; we confirm the final amount on the call.',
+    title: 'Pricing and payments',
+    items: [
+      {
+        q: 'How is the rental priced?',
+        a: 'Pricing is per day / per hour / per km. The price shown on the site is a starting rate and may vary by car, season and duration.',
+      },
+      {
+        q: 'Is there a security deposit?',
+        a: "Yes. It's refunded within 3 working days of returning the car, after deductions for any damage or fines.",
+      },
+    ],
   },
 ]
 
@@ -181,13 +217,15 @@ export default function Home() {
 
       <header className={`sg-header ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="sg-wrap sg-header__inner">
-          <a href="/" className="sg-logo" aria-label="SafarGo home">
+          <a href="/" className="sg-logo" aria-label="Drive Kochi home">
             <span className="sg-logo__sign" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="18" height="18">
                 <path d="M7 20V11a3 3 0 0 1 3-3h8M14 4l4 4-4 4" />
               </svg>
             </span>
-            Safar<span>Go</span>
+            <span className="sg-logo__word">
+              Drive<span>Kochi</span>
+            </span>
           </a>
           <nav className={`sg-nav ${menuOpen ? 'is-open' : ''}`} aria-label="Main">
             {NAV.map((n, i) => (
@@ -226,7 +264,7 @@ export default function Home() {
               <span className="sg-dot" /> Self-drive car rentals
             </p>
             <h1>
-              <span>Drive</span> <span>your own</span> <em>safar.</em>
+              <span>Drive</span> <span>Kochi</span> <em>your way.</em>
             </h1>
             <p className="sg-hero__lead">
               SUVs, sedans, hatchbacks, vans and more at clear daily prices. Send a free booking request and we'll
@@ -238,7 +276,7 @@ export default function Home() {
             <img src="/images/hero.webp" alt="A car driving down an open road at sunset" />
             <RoundBadge />
             <figcaption className="sg-stone" aria-hidden="true">
-              <span>Safar</span>
+              <span>Kochi</span>
               <strong>0</strong>
               <small>km</small>
             </figcaption>
@@ -428,7 +466,7 @@ export default function Home() {
 
       <section id="why" className="sg-section sg-wrap sg-why" aria-labelledby="why-title">
         <div className="sg-why__lead reveal">
-          <p className="sg-kicker">Why SafarGo</p>
+          <p className="sg-kicker">Why Drive Kochi</p>
           <h2 id="why-title">
             No accounts. No advance. <em>Just a call, and the keys.</em>
           </h2>
@@ -478,16 +516,24 @@ export default function Home() {
           </p>
         </div>
         <div className="sg-faq__list">
-          {FAQS.map((f, i) => (
-            <details key={f.q} className="reveal" style={{ '--i': i }}>
-              <summary>
-                <span>{pad(i + 1)}</span>
-                {f.q}
-                <i aria-hidden="true" />
-              </summary>
-              <p>{f.a}</p>
-            </details>
-          ))}
+          {FAQ_GROUPS.map((g, gi) => {
+            const offset = FAQ_GROUPS.slice(0, gi).reduce((n, prev) => n + prev.items.length, 0)
+            return (
+              <div key={g.title} className="sg-faq__group">
+                <h3 className="reveal">{g.title}</h3>
+                {g.items.map((f, i) => (
+                  <details key={f.q} className="reveal" style={{ '--i': i }}>
+                    <summary>
+                      <span>{pad(offset + i + 1)}</span>
+                      {f.q}
+                      <i aria-hidden="true" />
+                    </summary>
+                    <p>{f.a}</p>
+                  </details>
+                ))}
+              </div>
+            )
+          })}
         </div>
       </section>
 
@@ -521,10 +567,10 @@ export default function Home() {
           </div>
         </div>
         <p className="sg-footer__word" aria-hidden="true">
-          Safar<span>Go</span>
+          Drive<span>Kochi</span>
         </p>
         <div className="sg-wrap sg-footer__bottom">
-          <span>© {YEAR} SafarGo Rentals</span>
+          <span>© {YEAR} Drive Kochi</span>
           <span>Drive safe. Come back with stories.</span>
         </div>
       </footer>

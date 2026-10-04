@@ -1,4 +1,4 @@
-# SafarGo API
+# Drive Kochi API
 
 Base URL (local): `http://localhost:3000`
 
