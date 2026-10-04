@@ -21,6 +21,13 @@ const env = {
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
+  // New-enquiry email alerts (via Resend). Read from the environment,
+  // never hardcoded anywhere.
+  resendApiKey: process.env.RESEND_API_KEY,
+  notifyEmailTo: process.env.NOTIFY_EMAIL_TO,
+  notifyEmailFrom: process.env.NOTIFY_EMAIL_FROM,
+  // Base URL of the admin panel, used to link new enquiries in the email
+  adminUrl: process.env.ADMIN_URL,
 };
 
 // Admin session cookie settings, driven by the environment so they can be
