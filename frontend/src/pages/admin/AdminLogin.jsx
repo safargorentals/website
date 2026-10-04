@@ -23,10 +23,19 @@ export default function AdminLogin() {
     document.title = 'Admin login · Drive Kochi'
   }, [])
 
+  // Restored by Back/Forward from the browser's back/forward cache: check
+  // again, the admin may have logged in since this page was shown
+  useEffect(() => {
+    const onPageShow = (e) => e.persisted && setChecking(true)
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [])
+
   // Already logged in? Go straight to the dashboard, replacing this page in
   // history so Back does not return to the login form. The form stays
   // hidden until the check finishes, so it never flashes up first.
   useEffect(() => {
+    if (!checking) return
     let active = true
     adminMe()
       .then(() => active && navigate('/admin/dashboard', { replace: true }))
@@ -34,7 +43,7 @@ export default function AdminLogin() {
     return () => {
       active = false
     }
-  }, [navigate])
+  }, [checking, navigate])
 
   async function handleSubmit(e) {
     e.preventDefault()

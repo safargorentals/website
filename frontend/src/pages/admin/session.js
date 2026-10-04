@@ -63,6 +63,18 @@ export function useAdminRedirect() {
   const navigate = useNavigate()
   const [checking, setChecking] = useState(hasAdminHint)
 
+  // Back/Forward can restore this page from the browser's back/forward
+  // cache exactly as it was, without running any code again. If an admin
+  // logged in meanwhile, hide the page at once and check (pageshow with
+  // persisted = restored from that cache).
+  useEffect(() => {
+    const onPageShow = (e) => {
+      if (e.persisted && hasAdminHint()) setChecking(true)
+    }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [])
+
   useEffect(() => {
     if (!checking) return
     let active = true
