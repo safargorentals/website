@@ -124,7 +124,7 @@ export default function EnquiryModal({ car, trip, onClose }) {
 
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="enquiry-title">
+      <div className="modal sg-modal" role="dialog" aria-modal="true" aria-labelledby="enquiry-title">
         <button className="modal__close" onClick={onClose} aria-label="Close">
           ×
         </button>
@@ -132,15 +132,20 @@ export default function EnquiryModal({ car, trip, onClose }) {
         {done ? (
           <div className="modal__success">
             <div className="success-icon">✓</div>
-            <h2>Thank you!</h2>
+            <h2>
+              You're <em>on the list.</em>
+            </h2>
             <p>We've received your enquiry for the {car.name}. We'll call you shortly to confirm the booking.</p>
-            <button className="btn btn--primary" onClick={onClose}>
+            <button className="sg-btn sg-btn--ink" onClick={onClose}>
               Done
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} noValidate>
-            <h2 id="enquiry-title">Book your car</h2>
+            <p className="sg-kicker">Booking request</p>
+            <h2 id="enquiry-title">
+              Book your <em>car</em>
+            </h2>
 
             <div className="booking-car">
               <img src={car.images?.[0] || typeImage(car.type)} alt="" />
@@ -192,9 +197,10 @@ export default function EnquiryModal({ car, trip, onClose }) {
 
             {errors.form && <p className="alert alert--error">{errors.form}</p>}
 
-            <button className="btn btn--primary btn--block" disabled={submitting}>
+            <button className="sg-btn sg-btn--yellow sg-btn--lg sg-btn--block" disabled={submitting}>
               {submitting ? 'Sending…' : 'Send booking request'}
             </button>
+            <p className="sg-modal__note">Free to send. We call you to confirm before anything is paid.</p>
           </form>
         )}
       </div>

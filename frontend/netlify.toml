@@ -10,10 +10,10 @@
 
 # Forward API calls to the Render backend. The browser only ever talks to
 # Netlify, so the admin login cookie stays same-site.
-# Replace the URL with your Render web service's address.
+# The Render web service (API only).
 [[redirects]]
   from = "/api/*"
-  to = "https://YOUR-RENDER-SERVICE.onrender.com/api/:splat"
+  to = "https://safargorentals.onrender.com/api/:splat"
   status = 200
   force = true
 
