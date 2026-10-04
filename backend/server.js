@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 
 const env = require('./src/config/env');
 const apiRoutes = require('./src/routes');
+const requestLogger = require('./src/middleware/requestLogger');
 const notFound = require('./src/middleware/notFound');
 const errorHandler = require('./src/middleware/errorHandler');
 
@@ -19,6 +20,10 @@ const app = express();
 // proxies /api). Trust exactly that many hops so rate limiting sees the
 // real client IP instead of a proxy's.
 app.set('trust proxy', env.trustProxyHops);
+
+// In production: one line per request - method, path (no query string),
+// status and time. No bodies, cookies, headers or query strings.
+app.use(requestLogger);
 
 // Basic security headers for every response. Car photos come from
 // Cloudinary (or any https URL an admin pastes), so allow https images.
@@ -30,8 +35,26 @@ app.use(
   })
 );
 
-// Only allow requests coming from your frontend
-app.use(cors({ origin: env.frontendUrl, credentials: true }));
+// Only allow requests coming from your frontend. FRONTEND_URL may list one
+// or several comma-separated origins; only those exact origins get CORS
+// headers (never "*"). Anything else - and requests with no Origin - gets
+// no CORS headers at all. Credentials are allowed so the httpOnly admin
+// cookie can travel with cross-origin requests.
+function corsOrigin(origin, callback) {
+  if (origin && env.frontendOrigins.includes(origin)) {
+    return callback(null, origin); // allowed: respond with this exact origin
+  }
+  return callback(null, false); // not allowed: send no CORS headers at all
+}
+
+app.use(
+  cors({
+    origin: corsOrigin,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+  })
+);
 
 // Read request bodies sent as JSON (max 10 KB) and as cookies
 app.use(express.json({ limit: '10kb' }));

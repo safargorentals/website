@@ -15,7 +15,14 @@ const env = {
   port: Number(process.env.PORT) || 3000,
   databaseUrl: process.env.DATABASE_URL,
   jwtSecret: process.env.JWT_SECRET,
+  // The frontend origin(s). FRONTEND_URL may hold one or several origins
+  // separated by commas, e.g. "http://localhost:5173,https://safargo.com".
+  // Only these exact origins ever get CORS headers - never "*".
   frontendUrl: process.env.FRONTEND_URL,
+  frontendOrigins: (process.env.FRONTEND_URL || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
   // How many proxies sit in front of the app. 1 = Render only; 2 when the
   // frontend host (e.g. Netlify) also proxies /api to us.
   trustProxyHops: Number(process.env.TRUST_PROXY_HOPS) || 1,

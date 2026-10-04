@@ -174,6 +174,17 @@ npm run admin:create
 Asks for an email and a password in the terminal (the password is typed
 hidden and must be at least 12 characters). Refuses duplicate emails.
 
+### Change an admin password
+
+```bash
+npm run admin:change-password
+```
+
+Asks for the admin's email, then the new password twice (typed hidden,
+minimum 12 characters, the two entries must match). If the email is not
+an admin account the script fails clearly and changes nothing. The
+password is never shown or logged.
+
 ### POST /api/admin/login
 
 ```json
@@ -208,6 +219,27 @@ Without a valid session:
 ```json
 { "error": "Unauthorized" }
 ```
+
+## Admin dashboard
+
+Requires an admin session (no cookie -> `401 {"error":"Unauthorized"}`).
+
+### GET /api/admin/stats
+
+Live counts for the dashboard - five integers, no query params:
+
+```json
+{
+  "newEnquiries": 3,
+  "totalEnquiries": 6,
+  "totalCars": 10,
+  "availableCars": 7,
+  "featuredCars": 2
+}
+```
+
+(`newEnquiries` = enquiries still with status `new`; for per-status
+breakdowns use `GET /api/admin/enquiries/stats`.)
 
 ## Admin car management
 
@@ -417,6 +449,42 @@ in that case. The dashboard can call `/stats` for the status cards and the
 list endpoint for the table.
 
 All invalid input -> `400 {"error":"Validation failed","fields":{...}}`.
+
+## CORS
+
+The API only answers cross-origin browser requests whose `Origin` exactly
+matches one of the origins in `FRONTEND_URL`, which may list one or
+several origins separated by commas:
+
+```
+FRONTEND_URL=http://localhost:5173,https://safargo.com
+```
+
+- Only those exact origins ever receive an
+  `Access-Control-Allow-Origin` header (echoed back as-is, **never `*`**).
+  Any other origin - or a request with no Origin - gets no CORS headers
+  at all, so the browser blocks it.
+- `Access-Control-Allow-Credentials: true` is sent for allowed origins.
+- Allowed methods: `GET, POST, PUT, PATCH, DELETE, OPTIONS`.
+- Allowed headers: `Content-Type`.
+
+**Frontend note:** the admin session rides on the httpOnly `admin_token`
+cookie, so the frontend MUST send credentials with every API call, e.g.
+
+```js
+fetch('/api/admin/me', { credentials: 'include' })
+```
+
+(set `credentials: 'include'` once on your axios instance or fetch wrapper).
+Without it the browser will not attach the cookie on cross-origin
+requests and the admin will appear logged out.
+
+## Request logging (production)
+
+With `NODE_ENV=production` every request logs one line:
+`METHOD /path STATUS time_ms`, where the path has no query string.
+Request bodies, cookies, headers and query strings are never logged.
+Development logs nothing.
 
 ## Errors
 

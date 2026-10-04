@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const { z } = require('zod');
 const env = require('../config/env');
 const adminsModel = require('../models/admins');
+const carsModel = require('../models/cars');
+const enquiriesModel = require('../models/enquiries');
 
 const loginBodySchema = z.object({
   email: z.string().trim().email('Must be a valid email'),
@@ -66,4 +68,24 @@ function me(req, res) {
   res.json({ ok: true, email: req.admin.email });
 }
 
-module.exports = { login, logout, me };
+// GET /api/admin/stats (requires a valid session)
+// One dashboard payload: new + total enquiries, car totals.
+async function stats(req, res, next) {
+  try {
+    const [enquiryStats, carStats] = await Promise.all([
+      enquiriesModel.getEnquiryStats(),
+      carsModel.getCarStats(),
+    ]);
+    res.json({
+      newEnquiries: enquiryStats.new,
+      totalEnquiries: enquiryStats.total,
+      totalCars: carStats.total,
+      availableCars: carStats.available,
+      featuredCars: carStats.featured,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { login, logout, me, stats };
