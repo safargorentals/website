@@ -1,6 +1,7 @@
 const { z } = require('zod');
 const enquiriesModel = require('../models/enquiries');
 const carsModel = require('../models/cars');
+const { notifyNewEnquiry } = require('../services/notifyEnquiry');
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -99,7 +100,8 @@ async function createEnquiry(req, res, next) {
     const body = req.body && typeof req.body === 'object' ? req.body : {};
 
     if (isHoneypot(body)) {
-      // Look exactly like a real success so the bot cannot tell
+      // Look exactly like a real success so the bot cannot tell.
+      // Bots trigger nothing: no save, no email.
       return res.status(201).json({
         id: Math.floor(Math.random() * 90000) + 1,
         message: 'Enquiry received',
@@ -118,8 +120,9 @@ async function createEnquiry(req, res, next) {
     const data = parsed.data;
 
     // If a car was chosen, it must actually exist
+    let car = null;
     if (data.carId != null) {
-      const car = await carsModel.getCarById(data.carId);
+      car = await carsModel.getCarById(data.carId);
       if (!car) {
         return res.status(400).json({
           error: 'Validation failed',
@@ -133,6 +136,24 @@ async function createEnquiry(req, res, next) {
       phone: data.phone,
       email: data.email || null,
       carId: data.carId ?? null,
+      pickupLocation: data.pickupLocation,
+      dropoffLocation: data.dropoffLocation,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      pickupTime: data.pickupTime,
+      dropoffTime: data.dropoffTime,
+      message: data.message || null,
+    });
+
+    // Tell the site owner about the new enquiry WITHOUT making the customer
+    // wait: this is deliberately NOT awaited, and notifyNewEnquiry() handles
+    // all of its own errors, so email problems can never fail the enquiry.
+    notifyNewEnquiry({
+      name: data.name,
+      phone: data.phone,
+      email: data.email || null,
+      carId: data.carId ?? null,
+      carName: car ? car.name : null,
       pickupLocation: data.pickupLocation,
       dropoffLocation: data.dropoffLocation,
       startDate: data.startDate,
