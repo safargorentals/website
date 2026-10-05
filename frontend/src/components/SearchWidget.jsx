@@ -1,13 +1,29 @@
 import { useState } from 'react'
 import useCarTypes from '../carTypes.js'
+import useLocations, { locationLabel } from '../locations.js'
 import { shortDate, todayString } from '../constants.js'
 import Icon from './Icon.jsx'
+
+// Dropdown of the locations managed in the admin panel
+function LocationSelect({ locations, value, onChange }) {
+  return (
+    <select value={value} onChange={onChange} className={value ? '' : 'is-empty'}>
+      <option value="">Select location</option>
+      {locations.map((l) => (
+        <option key={l.id} value={l.name}>
+          {locationLabel(l)}
+        </option>
+      ))}
+    </select>
+  )
+}
 
 // The hero booking box. It doesn't search the server by itself: it hands the
 // trip to Home, which filters the fleet, shows trip totals on each car and
 // pre-fills the enquiry form.
 export default function SearchWidget({ initial, onSearch }) {
   const { types } = useCarTypes()
+  const locations = useLocations()
   const [form, setForm] = useState(
     () =>
       initial || {
@@ -68,13 +84,13 @@ export default function SearchWidget({ initial, onSearch }) {
         <div className={`sg-pass__grid ${form.sameLocation ? '' : 'has-dropoff'}`}>
           <label className="sg-pass__field sg-pass__field--from">
             <span>From</span>
-            <input value={form.pickupLocation} onChange={set('pickupLocation')} placeholder="Pickup city or area" />
+            <LocationSelect locations={locations} value={form.pickupLocation} onChange={set('pickupLocation')} />
           </label>
 
           {!form.sameLocation && (
             <label className="sg-pass__field sg-pass__field--to">
               <span>To</span>
-              <input value={form.dropoffLocation} onChange={set('dropoffLocation')} placeholder="Drop-off city or area" />
+              <LocationSelect locations={locations} value={form.dropoffLocation} onChange={set('dropoffLocation')} />
             </label>
           )}
 

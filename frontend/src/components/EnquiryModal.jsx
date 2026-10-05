@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createEnquiry } from '../api.js'
 import useCarTypes from '../carTypes.js'
+import useLocations, { locationLabel } from '../locations.js'
 import { formatPrice, rentalDays, todayString } from '../constants.js'
 
 const EMPTY = {
@@ -26,8 +27,8 @@ function validate(f) {
     e.phone = 'Enter a valid phone number (10 to 13 digits)'
   }
   if (f.email && !/^\S+@\S+\.\S+$/.test(f.email.trim())) e.email = 'Enter a valid email'
-  if (f.pickupLocation.trim().length < 2) e.pickupLocation = 'Enter a pickup location'
-  if (f.dropoffLocation.trim().length < 2) e.dropoffLocation = 'Enter a drop-off location'
+  if (f.pickupLocation.trim().length < 2) e.pickupLocation = 'Choose a pickup location'
+  if (f.dropoffLocation.trim().length < 2) e.dropoffLocation = 'Choose a drop-off location'
   if (!f.startDate) e.startDate = 'Choose a pickup date'
   else if (f.startDate < todayString()) e.startDate = 'Pickup date cannot be in the past'
   if (!f.endDate) e.endDate = 'Choose a return date'
@@ -65,6 +66,7 @@ function initialForm(trip) {
 
 export default function EnquiryModal({ car, trip, onClose }) {
   const carTypes = useCarTypes()
+  const locations = useLocations()
   const [form, setForm] = useState(() => initialForm(trip))
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
@@ -124,6 +126,27 @@ export default function EnquiryModal({ car, trip, onClose }) {
     </label>
   )
 
+  // Dropdown of the admin-managed locations. A value from the search box that
+  // is no longer in the list stays selectable, so nothing is silently lost.
+  const locationField = (key, label) => (
+    <label className={`field ${errors[key] ? 'field--error' : ''}`}>
+      <span>
+        {label}
+        <em> *</em>
+      </span>
+      <select value={form[key]} onChange={set(key)}>
+        <option value="">Select location</option>
+        {locations.map((l) => (
+          <option key={l.id} value={l.name}>
+            {locationLabel(l)}
+          </option>
+        ))}
+        {form[key] && !locations.some((l) => l.name === form[key]) && <option value={form[key]}>{form[key]}</option>}
+      </select>
+      {errors[key] && <small>{errors[key]}</small>}
+    </label>
+  )
+
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal sg-modal" role="dialog" aria-modal="true" aria-labelledby="enquiry-title">
@@ -177,8 +200,8 @@ export default function EnquiryModal({ car, trip, onClose }) {
               {field('pickupTime', 'Pickup time', { type: 'time' }, true)}
               {field('endDate', 'Return date', { type: 'date', min: form.startDate || todayString() }, true)}
               {field('dropoffTime', 'Return time', { type: 'time' }, true)}
-              {field('pickupLocation', 'Pickup location', { placeholder: 'e.g. Kochi' }, true)}
-              {field('dropoffLocation', 'Drop-off location', { placeholder: 'e.g. Thrissur' }, true)}
+              {locationField('pickupLocation', 'Pickup location')}
+              {locationField('dropoffLocation', 'Drop-off location')}
             </div>
 
             <label className={`field ${errors.message ? 'field--error' : ''}`}>

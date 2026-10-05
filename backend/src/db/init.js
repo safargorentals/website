@@ -18,7 +18,7 @@ async function main() {
   try {
     await pool.query(sql);
     console.log('SUCCESS: database schema applied.');
-    console.log('Tables ready: admins, cars, car_types, enquiries');
+    console.log('Tables ready: admins, cars, car_types, locations, enquiries');
     console.log('Indexes ready: cars(is_featured), cars(type), enquiries(status), enquiries(created_at)');
   } catch (err) {
     console.error('ERROR: failed to apply the schema.');

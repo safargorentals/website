@@ -119,6 +119,17 @@ store in `type` and what `GET /api/cars?type=` filters by.
 { "data": [{ "value": "suv", "label": "SUV", "blurb": "Room for family and luggage", "image": "/images/suv.webp" }] }
 ```
 
+## Locations
+
+### GET /api/locations
+
+Pickup / drop-off places, in display order. The site shows them as
+`name (tag)` in the search box and booking form, and in the scrolling band.
+
+```json
+{ "data": [{ "id": 1, "name": "Kochi Airport", "tag": "pickup" }] }
+```
+
 ## Enquiries
 
 ### POST /api/enquiries
@@ -369,6 +380,19 @@ in the new order -> the reordered list.
 ### DELETE /api/admin/car-types/:value
 
 `200 { "ok": true }`, or `409` while any car still uses the type.
+
+## Admin locations
+
+All routes start with `/api/admin/locations` and require an admin session.
+Names are unique (ignoring case) -> duplicates get `409`. Enquiries store
+the chosen name as text, so editing or deleting a location never changes
+past enquiries.
+
+- `GET /api/admin/locations` -> `{ "data": [...] }`
+- `POST /api/admin/locations` - body `{ "name": "Aluva Metro", "tag"?: "pickup" }` -> `201`
+- `PUT /api/admin/locations/:id` - change `name` and/or `tag` (`""` or null clears the tag)
+- `PUT /api/admin/locations/order` - body `{ "ids": [3, 1, 2, ...] }`, every location once
+- `DELETE /api/admin/locations/:id` -> `{ "ok": true }`
 
 ## Admin image uploads
 

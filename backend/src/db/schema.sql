@@ -54,6 +54,33 @@ INSERT INTO car_types (slug, label, blurb, image, sort_order) VALUES
   ('pickup', 'Pickup', 'Tough roads and cargo', '/images/pickup.webp', 6)
 ON CONFLICT (slug) DO NOTHING;
 
+-- Pickup / drop-off locations, managed from the admin panel. The website
+-- offers them in the search box and booking form, and shows them in the
+-- scrolling band. Enquiries store the chosen name as text, so editing or
+-- deleting a location never changes past enquiries.
+CREATE TABLE IF NOT EXISTS locations (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  tag TEXT,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS locations_name_unique ON locations (LOWER(name));
+
+-- The starting list, only when the table is empty (admin edits are kept)
+INSERT INTO locations (name, tag, sort_order)
+SELECT v.name, v.tag, v.sort_order
+FROM (VALUES
+  ('Kochi Airport', 'pickup', 1),
+  ('KSRTC Ernakulam', 'pickup', 2),
+  ('Nedumbassery', 'pickup', 3),
+  ('TVM Airport', 'pickup', 4),
+  ('Varkala Branch', 'yard', 5),
+  ('Vytilla Hub', 'pickup', 6)
+) AS v(name, tag, sort_order)
+WHERE NOT EXISTS (SELECT 1 FROM locations);
+
 -- Customer enquiries (no payments involved)
 CREATE TABLE IF NOT EXISTS enquiries (
   id SERIAL PRIMARY KEY,

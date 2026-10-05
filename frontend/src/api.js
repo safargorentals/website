@@ -55,6 +55,7 @@ export const getCars = (params = {}) => request(`/api/cars${qs(params)}`)
 export const getFeaturedCars = () => request('/api/cars/featured')
 export const getCar = (id) => request(`/api/cars/${id}`)
 export const getCarTypes = () => request('/api/car-types')
+export const getLocations = () => request('/api/locations')
 export const createEnquiry = (body) => request('/api/enquiries', { method: 'POST', body })
 
 // Admin auth
@@ -84,6 +85,14 @@ export const adminReorderCarTypes = (slugs) =>
   request('/api/admin/car-types/order', { method: 'PUT', body: { slugs } })
 export const adminDeleteCarType = (value) =>
   request(`/api/admin/car-types/${encodeURIComponent(value)}`, { method: 'DELETE' })
+
+// Admin locations
+export const adminListLocations = () => request('/api/admin/locations')
+export const adminCreateLocation = (body) => request('/api/admin/locations', { method: 'POST', body })
+export const adminUpdateLocation = (id, body) => request(`/api/admin/locations/${id}`, { method: 'PUT', body })
+export const adminReorderLocations = (ids) =>
+  request('/api/admin/locations/order', { method: 'PUT', body: { ids } })
+export const adminDeleteLocation = (id) => request(`/api/admin/locations/${id}`, { method: 'DELETE' })
 
 export function adminUploadImages(files) {
   const form = new FormData()

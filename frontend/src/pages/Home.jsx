@@ -8,6 +8,7 @@ import useReveal from '../useReveal.js'
 import useTheme from '../theme.js'
 import { useAdminRedirect } from './admin/session.js'
 import useCarTypes from '../carTypes.js'
+import useLocations from '../locations.js'
 import {
   CONTACT_PHONE,
   WHATSAPP_NUMBER,
@@ -28,8 +29,6 @@ const NAV = [
   { href: '#faq', label: 'FAQs' },
 ]
 
-// Shown in the scrolling yellow band under the hero
-const PLACES = ['Munnar', 'Alleppey', 'Varkala', 'Wayanad', 'Thekkady', 'Kochi', 'Vagamon', 'Kovalam']
 
 const PROMISES = ['No account needed', 'Free booking request', 'Pay after we confirm', 'Pickup where you want']
 
@@ -149,6 +148,8 @@ export default function Home() {
   const [scrolled, setScrolled] = useState(false)
   const [theme, toggleTheme] = useTheme()
   const { types: carTypes, label: typeLabel, image: typeImage } = useCarTypes()
+  // The scrolling band lists the pickup / drop-off locations from the admin
+  const locations = useLocations()
 
   const load = useCallback(async (selectedType, pageNum) => {
     setLoading(true)
@@ -205,6 +206,11 @@ export default function Home() {
   }
 
   const days = rentalDays(trip)
+
+  // Repeat the names so one pass of the band is wider than any screen
+  const bandItems = locations.length
+    ? Array.from({ length: Math.ceil(12 / locations.length) }, (_, r) => locations.map((l) => ({ ...l, key: `${r}-${l.id}` }))).flat()
+    : []
 
   if (checkingAdmin) return null
 
@@ -298,13 +304,14 @@ export default function Home() {
         </div>
       </section>
 
+      {bandItems.length > 0 && (
       <div className="sg-band" aria-hidden="true">
         <div className="sg-band__track">
           {[0, 1].map((k) => (
             <span key={k}>
-              {PLACES.map((p) => (
-                <span key={p}>
-                  {p}
+              {bandItems.map((l) => (
+                <span key={l.key}>
+                  {l.name}
                   <i>✺</i>
                 </span>
               ))}
@@ -312,6 +319,7 @@ export default function Home() {
           ))}
         </div>
       </div>
+      )}
 
       <section className="sg-section sg-wrap" aria-labelledby="types-title">
         <div className="sg-head reveal">

@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import CarsTab from './CarsTab.jsx'
 import CarTypesTab from './CarTypesTab.jsx'
 import EnquiriesTab from './EnquiriesTab.jsx'
+import LocationsTab from './LocationsTab.jsx'
 import { useAdminSession } from './session.js'
 
 const TABS = [
   { key: 'cars', label: 'Cars' },
   { key: 'types', label: 'Car types' },
+  { key: 'locations', label: 'Locations' },
   { key: 'enquiries', label: 'Enquiries' },
 ]
 
@@ -59,6 +61,7 @@ export default function AdminDashboard() {
 
         {tab === 'cars' && <CarsTab onUnauthorized={onUnauthorized} />}
         {tab === 'types' && <CarTypesTab onUnauthorized={onUnauthorized} />}
+        {tab === 'locations' && <LocationsTab onUnauthorized={onUnauthorized} />}
         {tab === 'enquiries' && <EnquiriesTab onUnauthorized={onUnauthorized} />}
       </div>
     </div>

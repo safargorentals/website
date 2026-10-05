@@ -16,7 +16,7 @@ require('dotenv').config();
 // ids, moves the id counters on, and checks the row counts match.
 
 // Parents before children, so foreign keys are satisfied
-const TABLES = ['admins', 'car_types', 'cars', 'enquiries'];
+const TABLES = ['admins', 'car_types', 'locations', 'cars', 'enquiries'];
 
 const describe = (url) => {
   try {
@@ -53,8 +53,9 @@ async function main() {
     await client.query(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
 
     // 2. Refuse to overwrite real data. car_types always holds the six
-    //    default rows that schema.sql inserts; those are replaced below.
-    for (const table of TABLES.filter((t) => t !== 'car_types')) {
+    //    default rows that schema.sql inserts (so do locations); those are
+    //    replaced below.
+    for (const table of TABLES.filter((t) => t !== 'car_types' && t !== 'locations')) {
       const { rows } = await client.query(`SELECT COUNT(*)::int AS n FROM ${table}`);
       if (rows[0].n > 0) {
         throw new Error(`the new database already has ${rows[0].n} rows in "${table}". Nothing was copied.`);
@@ -64,6 +65,7 @@ async function main() {
     // 3. Copy everything in one transaction: all or nothing
     await client.query('BEGIN');
     await client.query('DELETE FROM car_types');
+    await client.query('DELETE FROM locations');
     const counts = {};
     for (const table of TABLES) {
       const { rows } = await from.query(`SELECT * FROM ${table}`);
@@ -87,7 +89,7 @@ async function main() {
     }
 
     // 4. Continue the id counters after the copied ids
-    for (const table of ['admins', 'cars', 'enquiries']) {
+    for (const table of ['admins', 'locations', 'cars', 'enquiries']) {
       await client.query(
         `SELECT setval(pg_get_serial_sequence($1, 'id'), COALESCE((SELECT MAX(id) FROM ${table}), 0) + 1, false)`,
         [table]
