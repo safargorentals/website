@@ -9,8 +9,8 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/admin" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      {/* Shortcut to the admin: the dashboard, or the login page first */}
-      <Route path="/landing" element={<Navigate to="/admin/dashboard" replace />} />
+      {/* /landing is another address for the website */}
+      <Route path="/landing" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

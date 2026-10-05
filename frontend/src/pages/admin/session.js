@@ -6,10 +6,9 @@ import { adminLogout, adminMe } from '../../api.js'
 // browser cannot read, so "am I signed in?" is always asked of the API
 // (GET /api/admin/me).
 //
-// Rules while logged in: the Back button keeps you on the dashboard, and
-// opening the website sends you to the dashboard (see useAdminRedirect).
-// You leave the admin only by logging out (the Log out button, or the logo,
-// which logs out and opens the website).
+// Rules while logged in: the Back button keeps you on the dashboard. The
+// website opens normally and shows a Dashboard button (see useIsAdmin).
+// The Log out button (or the admin logo) ends the session.
 
 // Tells other open admin tabs about a logout, so they close the dashboard
 // straight away instead of on their next request.
@@ -56,41 +55,41 @@ const clearAdminHint = () => {
   setTabFlag(false)
 }
 
-// For public pages: if an admin is logged in on this browser, go to the
-// dashboard (replace, so Back does not return to the website). Returns true
-// while that is being checked, so the page can render nothing meanwhile.
-export function useAdminRedirect() {
-  const navigate = useNavigate()
-  const [checking, setChecking] = useState(hasAdminHint)
+// For public pages: true while an admin is logged in on this browser, so
+// the website can offer a way back to the dashboard. The website itself is
+// shown normally. Only asks the API when a marker says an admin logged in
+// here, so ordinary visitors cause no extra request.
+export function useIsAdmin() {
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [recheck, setRecheck] = useState(0)
 
   // Back/Forward can restore this page from the browser's back/forward
-  // cache exactly as it was, without running any code again. If an admin
-  // logged in meanwhile, hide the page at once and check (pageshow with
-  // persisted = restored from that cache).
+  // cache without running any code, so check again then
   useEffect(() => {
-    const onPageShow = (e) => {
-      if (e.persisted && hasAdminHint()) setChecking(true)
-    }
+    const onPageShow = (e) => e.persisted && setRecheck((n) => n + 1)
     window.addEventListener('pageshow', onPageShow)
     return () => window.removeEventListener('pageshow', onPageShow)
   }, [])
 
   useEffect(() => {
-    if (!checking) return
+    if (!hasAdminHint()) {
+      setIsAdmin(false)
+      return
+    }
     let active = true
     adminMe()
-      .then(() => active && navigate('/admin/dashboard', { replace: true }))
+      .then(() => active && setIsAdmin(true))
       .catch(() => {
         // Session ended (expired, logged out elsewhere): forget the hint
         clearAdminHint()
-        if (active) setChecking(false)
+        if (active) setIsAdmin(false)
       })
     return () => {
       active = false
     }
-  }, [checking, navigate])
+  }, [recheck])
 
-  return checking
+  return isAdmin
 }
 
 // Guards admin pages. Renders nothing until the API confirms the session,

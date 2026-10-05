@@ -424,6 +424,41 @@ body:has(.sg) {
   color: var(--sg-muted);
 }
 
+.sg-admin-link {
+  flex: none;
+  height: 40px;
+  margin-right: -20px;
+  padding: 0 16px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .sg-admin-link {
+    margin-right: 0;
+  }
+}
+
+.sg-admin-link__short {
+  display: none;
+}
+
+/* Phones: short label, and the admin does not need the call button */
+@media (max-width: 480px) {
+  .sg-admin-link {
+    padding: 0 14px;
+  }
+  .sg-admin-link .icon,
+  .sg-admin-link__full {
+    display: none;
+  }
+  .sg-admin-link__short {
+    display: inline;
+  }
+  .sg-admin-link ~ .sg-header__call {
+    display: none;
+  }
+}
+
 .sg-theme {
   display: grid;
   flex: none;
@@ -516,6 +551,29 @@ body:has(.sg) {
     display: none;
   }
 }
+
+/* Very small phones (320-360 px): tighter header */
+@media (max-width: 360px) {
+  .sg-header__inner {
+    gap: 8px;
+  }
+  .sg-logo {
+    gap: 8px;
+    font-size: 1.3rem;
+  }
+  .sg-admin-link {
+    height: 38px;
+    padding: 0 10px;
+  }
+  .sg-theme {
+    width: 40px;
+    height: 40px;
+  }
+  .sg-header__menu {
+    padding: 2px;
+  }
+}
+
 
 /* ---------- Hero ---------- */
 

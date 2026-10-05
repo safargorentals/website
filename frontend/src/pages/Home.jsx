@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getCars, getFeaturedCars } from '../api.js'
 import CarCard from '../components/CarCard.jsx'
 import EnquiryModal from '../components/EnquiryModal.jsx'
@@ -6,7 +7,7 @@ import Icon from '../components/Icon.jsx'
 import SearchWidget from '../components/SearchWidget.jsx'
 import useReveal from '../useReveal.js'
 import useTheme from '../theme.js'
-import { useAdminRedirect } from './admin/session.js'
+import { useIsAdmin } from './admin/session.js'
 import useCarTypes from '../carTypes.js'
 import useLocations from '../locations.js'
 import {
@@ -133,8 +134,8 @@ function RoundBadge() {
 }
 
 export default function Home() {
-  // A logged-in admin opening the website goes to the dashboard instead
-  const checkingAdmin = useAdminRedirect()
+  // A logged-in admin sees the website normally, plus a Dashboard button
+  const isAdmin = useIsAdmin()
   const [type, setType] = useState('')
   const [cars, setCars] = useState([])
   const [page, setPage] = useState(1)
@@ -212,8 +213,6 @@ export default function Home() {
     ? Array.from({ length: Math.ceil(12 / locations.length) }, (_, r) => locations.map((l) => ({ ...l, key: `${r}-${l.id}` }))).flat()
     : []
 
-  if (checkingAdmin) return null
-
   return (
     <div className="sg">
       <div className="sg-strip" aria-hidden="true">
@@ -250,6 +249,13 @@ export default function Home() {
               </a>
             ))}
           </nav>
+          {isAdmin && (
+            <Link to="/admin/dashboard" className="sg-btn sg-btn--yellow sg-admin-link">
+              <span className="sg-admin-link__full">Dashboard</span>
+              <span className="sg-admin-link__short">Admin</span>
+              <Icon name="arrow" size={16} />
+            </Link>
+          )}
           <button
             className="sg-theme"
             onClick={toggleTheme}
