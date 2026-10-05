@@ -74,7 +74,10 @@ async function logout(req, res, next) {
 }
 
 // GET /api/admin/me (requires a valid session)
+// Also (re)sets the admin_hint cookie, so sessions that started before the
+// hint existed get it the next time the dashboard checks the session.
 function me(req, res) {
+  res.cookie(env.hintCookieOptions.name, '1', env.hintCookieOptions);
   res.json({ ok: true, email: req.admin.email });
 }
 
