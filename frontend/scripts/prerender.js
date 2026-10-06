@@ -149,7 +149,6 @@ if (siteUrl) {
 console.log(`prerender: home page rendered${siteUrl ? ` for ${siteUrl}` : ''}`)
 if (!siteUrl) console.warn('prerender: no SITE_URL / URL set, so no canonical URL, share image or sitemap')
 if (!addressLine()) console.warn('prerender: no street address in src/business.js yet')
-if (BUSINESS.phone === '+91 98765 43210') console.warn('prerender: VITE_CONTACT_PHONE is not set, the sample phone number is used')
 
 // Some modules keep handles open (e.g. a BroadcastChannel); the work is done
 process.exit(0)

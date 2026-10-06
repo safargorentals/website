@@ -6,7 +6,7 @@ import { CONTACT_PHONE } from './constants.js'
 // appear on your Google Business Profile.
 export const BUSINESS = {
   name: 'Drive Kochi',
-  legalName: 'AVS Rent A Car',
+  legalName: 'Drive Kochi by AVS Rent A Car',
   description:
     'Self-drive car rentals in Kochi: SUVs, sedans, hatchbacks, vans and more at clear daily prices. Pickup at Kochi Airport, Ernakulam and other places across Kochi.',
   phone: CONTACT_PHONE,

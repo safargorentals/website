@@ -22,7 +22,7 @@ export const ENQUIRY_STATUSES = [
   { value: 'closed', label: 'Closed' },
 ]
 
-export const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+91 98765 43210'
+export const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+91 86005 55747'
 export const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || ''
 
 export function capitalize(s) {
