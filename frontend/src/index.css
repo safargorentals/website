@@ -266,7 +266,8 @@ code {
 .dk-word {
   display: inline-flex;
   flex-direction: column;
-  gap: 0.35em;
+  gap: 0.1em;
+  line-height: 1;
 }
 
 .dk-word__name {
