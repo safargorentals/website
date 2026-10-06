@@ -22,12 +22,32 @@
   # signs every proxied request and the API refuses unsigned ones.
   # signed = "API_SIGNATURE_TOKEN"
 
-# Single-page app: every other path loads index.html and React Router
-# shows the right page (/admin, /admin/dashboard, ...).
+# /landing is another address for the home page: a permanent redirect, so
+# search engines don't see the same page twice.
+[[redirects]]
+  from = "/landing"
+  to = "/"
+  status = 301
+
+# index.html holds the pre-rendered home page (scripts/prerender.js);
+# app.html is the empty app shell. The admin pages load the shell and React
+# Router shows the right page.
+[[redirects]]
+  from = "/admin"
+  to = "/app.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/app.html"
+  status = 200
+
+# Any other unknown path: a real 404 for search engines; in a browser the
+# app then sends the visitor to the home page.
 [[redirects]]
   from = "/*"
-  to = "/index.html"
-  status = 200
+  to = "/app.html"
+  status = 404
 
 # Security headers for every page.
 # Content-Security-Policy: scripts only from this site, plus the one inline

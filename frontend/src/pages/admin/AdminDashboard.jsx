@@ -4,6 +4,7 @@ import CarTypesTab from './CarTypesTab.jsx'
 import EnquiriesTab from './EnquiriesTab.jsx'
 import LocationsTab from './LocationsTab.jsx'
 import { useAdminSession } from './session.js'
+import Logo from '../../components/Logo.jsx'
 
 const TABS = [
   { key: 'cars', label: 'Cars' },
@@ -38,8 +39,8 @@ export default function AdminDashboard() {
     <div className="admin">
       <header className="admin__header">
         <div className="container admin__header-inner">
-          <a href="/" className="logo" onClick={goToWebsite} title="Log out and open the website">
-            Drive<span>Kochi</span> <small>Admin</small>
+          <a href="/" className="logo dk-logo" onClick={goToWebsite} title="Log out and open the website" aria-label="Drive Kochi admin: log out and open the website">
+            <Logo size={30} /> <small>Admin</small>
           </a>
           <div className="admin__user">
             <span>{email}</span>

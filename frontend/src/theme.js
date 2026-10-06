@@ -10,7 +10,10 @@ const query = () => window.matchMedia('(prefers-color-scheme: dark)')
 const systemTheme = () => (query().matches ? 'dark' : 'light')
 
 export default function useTheme() {
-  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || systemTheme())
+  // (No document when the page is pre-rendered at build time)
+  const [theme, setTheme] = useState(() =>
+    typeof document === 'undefined' ? 'light' : document.documentElement.dataset.theme || systemTheme(),
+  )
 
   // Without an override, keep the toggle icon in sync if the system flips
   useEffect(() => {

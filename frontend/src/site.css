@@ -360,15 +360,12 @@ body:has(.sg) {
   gap: 12px;
   margin-right: auto;
   color: var(--sg-ink);
-  font-size: 1.55rem;
+  font-family: var(--sg-display);
+  font-size: 1.7rem;
   font-weight: 800;
   font-stretch: 80%;
   letter-spacing: -0.03em;
   text-decoration: none;
-}
-
-.sg-logo__word span {
-  color: var(--sg-green);
 }
 
 /* A yellow diamond road sign with a turn arrow */
@@ -398,6 +395,13 @@ body:has(.sg) {
   transform: rotate(225deg);
 }
 
+/* "By AVS Rent A Car" only where the header has room */
+@media (max-width: 1100px) {
+  .sg-logo .dk-word__tag {
+    display: none;
+  }
+}
+
 .sg-nav {
   display: flex;
   gap: 28px;
@@ -417,6 +421,18 @@ body:has(.sg) {
 
 .sg-nav a:hover {
   background-size: 100% 35%;
+}
+
+/* Header text in the same cut as the logo: narrower, bolder, tighter */
+.sg-nav a,
+.sg-header .sg-btn {
+  font-stretch: 90%;
+  letter-spacing: -0.02em;
+}
+
+.sg-nav a {
+  font-weight: 700;
+  font-size: 1.02rem;
 }
 
 .sg-nav small {
@@ -559,7 +575,7 @@ body:has(.sg) {
   }
   .sg-logo {
     gap: 8px;
-    font-size: 1.3rem;
+    font-size: 1.4rem;
   }
   .sg-admin-link {
     height: 38px;
@@ -1979,23 +1995,42 @@ body:has(.sg) {
   color: var(--sg-yellow);
 }
 
+.sg-footer__grid address {
+  padding: 4px 0;
+  color: var(--sg-night-muted);
+  font-style: normal;
+  line-height: 1.4;
+}
+
+.sg-footer__grid a address {
+  padding: 0;
+  color: inherit;
+}
+
 /* Giant outlined wordmark */
 .sg-footer__word {
   margin: 56px 0 -0.13em;
   color: color-mix(in srgb, var(--sg-night-text) 8%, var(--sg-night));
+  font-family: var(--sg-display);
   font-size: 18.5vw;
   font-weight: 800;
-  font-stretch: 75%;
   line-height: 0.8;
-  letter-spacing: 0.03em;
   text-align: center;
-  text-transform: uppercase;
   white-space: nowrap;
   user-select: none;
+  --dk-drive: color-mix(in srgb, var(--sg-night-text) 8%, var(--sg-night));
+  --dk-drive-weight: 400;
+  --dk-kochi: var(--sg-yellow);
+  --dk-sign: var(--sg-yellow);
 }
 
-.sg-footer__word span {
-  color: var(--sg-yellow);
+.sg-footer__logo {
+  margin-bottom: 22px;
+  font-size: 2rem;
+}
+
+.sg-footer__logo:hover .dk-mark {
+  transform: rotate(180deg);
 }
 
 .sg-footer__bottom {

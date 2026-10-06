@@ -35,7 +35,7 @@ const FALLBACK_IMAGE = '/images/sedan.webp'
 
 // { types, label(value), image(value) }
 export default function useCarTypes() {
-  const list = useSyncExternalStore(subscribe, () => types)
+  const list = useSyncExternalStore(subscribe, () => types, () => types)
 
   useEffect(() => {
     if (requested) return

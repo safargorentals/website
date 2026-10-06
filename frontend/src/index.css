@@ -28,6 +28,14 @@
   --blue-soft: rgba(28, 100, 200, 0.1);
   --whatsapp: #1fa855;
 
+  /* Logo (components/Logo.jsx) */
+  --dk-sign: #f4b400;
+  --dk-sign-edge: #17201b;
+  --dk-drive: #17201b;
+  --dk-drive-weight: 800;
+  --dk-kochi: #f4b400;
+  --dk-tag: #3d4741;
+
   --radius: 12px;
   --radius-sm: 8px;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
@@ -69,6 +77,12 @@
     --blue: #74a9ff;
     --blue-soft: rgba(116, 169, 255, 0.14);
 
+    --dk-sign-edge: #f2ebdc;
+    --dk-drive: #f4b400;
+    --dk-drive-weight: 400;
+    --dk-kochi: #f2ebdc;
+    --dk-tag: #a9b0a8;
+
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.6);
 
@@ -100,6 +114,12 @@
   --amber-soft: rgba(252, 196, 25, 0.14);
   --blue: #74a9ff;
   --blue-soft: rgba(116, 169, 255, 0.14);
+
+  --dk-sign-edge: #f2ebdc;
+  --dk-drive: #f4b400;
+  --dk-drive-weight: 400;
+  --dk-kochi: #f2ebdc;
+  --dk-tag: #a9b0a8;
 
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.6);
@@ -204,6 +224,95 @@ code {
 
 /* ---------- Logo ---------- */
 
+/* Drive Kochi logo (components/Logo.jsx). Sizes are in em, so set
+   font-size on .dk-logo to scale the whole logo. */
+.dk-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  font-family: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  line-height: 1;
+  text-decoration: none;
+}
+
+/* Always the dark-background colours (e.g. the night-coloured footer) */
+.dk-logo--night {
+  --dk-sign-edge: #f2ebdc;
+  --dk-drive: #f4b400;
+  --dk-drive-weight: 400;
+  --dk-kochi: #f2ebdc;
+  --dk-tag: #a9b0a8;
+}
+
+.dk-mark {
+  flex: none;
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.dk-mark__sign {
+  fill: var(--dk-sign);
+  stroke: var(--dk-sign-edge);
+  stroke-width: 4;
+}
+
+.dk-mark__arrow {
+  fill: none;
+  stroke: #17201b;
+  stroke-width: 2.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dk-word {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.35em;
+}
+
+.dk-word__name {
+  display: inline-flex;
+  align-items: baseline;
+  font-weight: 800;
+  font-stretch: 90%;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
+
+.dk-word__drive {
+  color: var(--dk-drive);
+  font-weight: var(--dk-drive-weight);
+}
+
+.dk-word__kochi {
+  display: inline-flex;
+  align-items: baseline;
+  color: var(--dk-kochi);
+}
+
+/* The steering wheel stands in for the "o": x-height tall, on the baseline */
+.dk-word__wheel {
+  width: 0.54em;
+  height: 0.54em;
+  margin: 0 0.01em 0 0.03em;
+  fill: none;
+  stroke: var(--dk-sign);
+}
+
+.dk-word__hub {
+  fill: var(--dk-sign);
+  stroke: none;
+}
+
+.dk-word__tag {
+  padding-left: 0.1em;
+  color: var(--dk-tag);
+  font-family: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: max(0.16em, 9px);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
 .logo {
   font-size: 1.5rem;
   font-weight: 800;
@@ -212,9 +321,6 @@ code {
   text-decoration: none;
 }
 
-.logo span {
-  color: var(--primary);
-}
 
 .logo small {
   font-size: 0.75rem;

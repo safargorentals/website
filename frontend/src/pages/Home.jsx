@@ -4,12 +4,15 @@ import { getCars, getFeaturedCars } from '../api.js'
 import CarCard from '../components/CarCard.jsx'
 import EnquiryModal from '../components/EnquiryModal.jsx'
 import Icon from '../components/Icon.jsx'
+import Logo, { LogoWord } from '../components/Logo.jsx'
 import SearchWidget from '../components/SearchWidget.jsx'
 import useReveal from '../useReveal.js'
 import useTheme from '../theme.js'
 import { useIsAdmin } from './admin/session.js'
 import useCarTypes from '../carTypes.js'
 import useLocations from '../locations.js'
+import { BUSINESS, addressLine } from '../business.js'
+import { FAQ_GROUPS } from '../faqs.js'
 import {
   CONTACT_PHONE,
   WHATSAPP_NUMBER,
@@ -47,65 +50,6 @@ const STEPS = [
   { title: 'Pick dates and places', text: 'Tell us when and where you want to pick up and return it.' },
   { title: 'We confirm by phone', text: 'We call you back to confirm availability and the final price.' },
   { title: 'Pick up and drive', text: 'Collect the keys and enjoy the journey.' },
-]
-
-// Grouped by topic; numbering runs on across the groups
-const FAQ_GROUPS = [
-  {
-    title: 'Booking and enquiries',
-    items: [
-      {
-        q: 'How do I book a car?',
-        a: "Send an enquiry through the site, or call or WhatsApp us. We'll confirm availability and the price, then finalise your booking.",
-      },
-      {
-        q: 'Do I pay online when I submit an enquiry?',
-        a: "No. Submitting an enquiry doesn't charge you or commit you to anything. Payment is arranged once we confirm your booking.",
-      },
-      {
-        q: 'How quickly will you reply?',
-        a: 'We aim to respond within 30-40 mins. For urgent bookings, please call us.',
-      },
-      {
-        q: 'How early should I book?',
-        a: 'We recommend booking 2-3 days ahead, and earlier for weekends, festivals and holiday season.',
-      },
-      {
-        q: 'Can I rent a car for just a few hours?',
-        a: 'Yes, hourly / half-day / full-day packages are available. Ask us for the options.',
-      },
-    ],
-  },
-  {
-    title: 'Eligibility and documents',
-    items: [
-      {
-        q: 'What documents do I need?',
-        a: 'A valid driving license, a government ID (Aadhaar, passport or voter ID), and [address proof, if required].',
-      },
-      {
-        q: 'What is the minimum age to rent?',
-        a: '21 years, with a license held for at least 1 year.',
-      },
-      {
-        q: 'Can foreign tourists rent a car?',
-        a: 'Yes, with a valid passport, visa and an International Driving Permit along with their home license.',
-      },
-    ],
-  },
-  {
-    title: 'Pricing and payments',
-    items: [
-      {
-        q: 'How is the rental priced?',
-        a: 'Pricing is per day / per hour / per km. The price shown on the site is a starting rate and may vary by car, season and duration.',
-      },
-      {
-        q: 'Is there a security deposit?',
-        a: "Yes. It's refunded within 3 working days of returning the car, after deductions for any damage or fines.",
-      },
-    ],
-  },
 ]
 
 const pad = (n) => String(n).padStart(2, '0')
@@ -172,7 +116,7 @@ export default function Home() {
   }, [type, load])
 
   useEffect(() => {
-    document.title = 'Drive Kochi | Self-drive car rental in Kochi'
+    document.title = 'Drive Kochi | Self-drive car rental in Kochi (Cochin)'
   }, [])
 
   // Featured cars are a nice-to-have; if the request fails the section just stays hidden.
@@ -237,9 +181,7 @@ export default function Home() {
                 <path d="M7 20V11a3 3 0 0 1 3-3h8M14 4l4 4-4 4" />
               </svg>
             </span>
-            <span className="sg-logo__word">
-              Drive<span>Kochi</span>
-            </span>
+            <LogoWord tagline />
           </a>
           <nav className={`sg-nav ${menuOpen ? 'is-open' : ''}`} aria-label="Main">
             {NAV.map((n, i) => (
@@ -289,8 +231,8 @@ export default function Home() {
               <span>Drive</span> <span>Kochi</span> <em>your way.</em>
             </h1>
             <p className="sg-hero__lead">
-              SUVs, sedans, hatchbacks, vans and more at clear daily prices. Send a free booking request and we'll
-              call you to confirm. No account, no advance.
+              Self-drive car rental in Kochi (Cochin) and Ernakulam. SUVs, sedans, hatchbacks, vans and more at clear
+              daily prices. Send a free booking request and we'll call you to confirm. No account, no advance.
             </p>
           </div>
 
@@ -564,6 +506,9 @@ export default function Home() {
       <footer className="sg-footer">
         <div className="sg-wrap sg-footer__grid">
           <div className="sg-footer__about">
+            <a href="/" className="sg-footer__logo dk-logo dk-logo--night" aria-label="Drive Kochi home">
+              <Logo size={40} tagline />
+            </a>
             <p>Self-drive car rentals for city trips, weekends away and long journeys.</p>
             <small>Drive Kochi is a unit of AVS Rent A Car.</small>
           </div>
@@ -591,10 +536,18 @@ export default function Home() {
                 WhatsApp
               </a>
             )}
+            {addressLine() &&
+              (BUSINESS.mapUrl ? (
+                <a href={BUSINESS.mapUrl} target="_blank" rel="noreferrer">
+                  <address>{addressLine()}</address>
+                </a>
+              ) : (
+                <address>{addressLine()}</address>
+              ))}
           </div>
         </div>
         <p className="sg-footer__word" aria-hidden="true">
-          Drive<span>Kochi</span>
+          <LogoWord />
         </p>
         <div className="sg-wrap sg-footer__bottom">
           <span>© {YEAR} Drive Kochi · A unit of AVS Rent A Car</span>

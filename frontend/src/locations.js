@@ -42,7 +42,7 @@ export function replaceLocations(list) {
 export const locationLabel = (l) => (l.tag ? `${l.name} (${l.tag})` : l.name)
 
 export default function useLocations() {
-  const list = useSyncExternalStore(subscribe, () => locations)
+  const list = useSyncExternalStore(subscribe, () => locations, () => locations)
 
   useEffect(() => {
     if (requested) return

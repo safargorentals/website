@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { adminLogin, adminMe } from '../../api.js'
+import Logo from '../../components/Logo.jsx'
 
 // Why the visitor landed here (set by useAdminSession / logout)
 const NOTICES = {
@@ -65,8 +66,8 @@ export default function AdminLogin() {
   return (
     <div className="login-page">
       <form className="login-card" onSubmit={handleSubmit}>
-        <a href="/" className="logo">
-          Drive<span>Kochi</span>
+        <a href="/" className="logo dk-logo" aria-label="Drive Kochi website">
+          <Logo size={34} tagline />
         </a>
         <h1>Admin login</h1>
 
