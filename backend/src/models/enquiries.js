@@ -89,6 +89,14 @@ async function getEnquiries(filters = {}) {
   return { rows, count: countRows[0].count };
 }
 
+// Every enquiry with its car name, newest first (for the Google Sheet)
+async function getAllEnquiriesUnpaged() {
+  const { rows } = await getPool().query(
+    'SELECT e.*, c.name AS car_name FROM enquiries e LEFT JOIN cars c ON c.id = e.car_id ORDER BY e.created_at DESC, e.id DESC'
+  );
+  return rows;
+}
+
 // One enquiry with its car name, or null if the id does not exist
 async function getEnquiryById(id) {
   const { rows } = await getPool().query(
@@ -144,6 +152,7 @@ async function getEnquiryStats() {
 module.exports = {
   createEnquiry,
   getEnquiries,
+  getAllEnquiriesUnpaged,
   getEnquiryById,
   updateEnquiry,
   deleteEnquiry,

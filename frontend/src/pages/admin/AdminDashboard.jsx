@@ -3,6 +3,7 @@ import CarsTab from './CarsTab.jsx'
 import CarTypesTab from './CarTypesTab.jsx'
 import EnquiriesTab from './EnquiriesTab.jsx'
 import LocationsTab from './LocationsTab.jsx'
+import SheetSyncPanel from './SheetSyncPanel.jsx'
 import { useAdminSession } from './session.js'
 import Logo from '../../components/Logo.jsx'
 
@@ -52,6 +53,8 @@ export default function AdminDashboard() {
       </header>
 
       <div className="container section">
+        <SheetSyncPanel onUnauthorized={onUnauthorized} />
+
         <nav className="tabs">
           {TABS.map((t) => (
             <button key={t.key} className={`tab ${tab === t.key ? 'tab--active' : ''}`} onClick={() => setTab(t.key)}>

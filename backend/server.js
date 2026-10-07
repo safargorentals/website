@@ -15,6 +15,8 @@ const adminRequestGuard = require('./src/middleware/adminRequestGuard');
 const { publicLimiter, adminLimiter, connectionLimiter } = require('./src/middleware/apiLimiter');
 const notFound = require('./src/middleware/notFound');
 const errorHandler = require('./src/middleware/errorHandler');
+const sheetSyncTrigger = require('./src/middleware/sheetSyncTrigger');
+const { startSheetSync } = require('./src/services/sheetSync');
 
 const app = express();
 
@@ -77,6 +79,9 @@ app.use('/api/admin', adminLimiter);
 // Admin responses are never cached, and admin changes need the CSRF header
 app.use('/api/admin', adminRequestGuard);
 
+// Website changes are copied to the Google Sheet (when one is connected)
+app.use('/api', sheetSyncTrigger);
+
 // All /api routes live in src/routes
 app.use('/api', apiRoutes);
 
@@ -102,6 +107,7 @@ app.use(errorHandler);
 const port = env.port;
 app.listen(port, () => {
   console.log(`Drive Kochi API listening on port ${port}`);
+  startSheetSync();
 });
 
 module.exports = app;

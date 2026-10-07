@@ -462,6 +462,34 @@ code {
   line-height: 1.7;
 }
 
+/* ---------- Google Sheet status (admin dashboard) ---------- */
+
+.sheet-sync {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.sheet-sync p {
+  margin-top: 4px;
+}
+
+.sheet-sync__warn {
+  color: var(--amber);
+}
+
+.sheet-sync__actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* ---------- Tabs ---------- */
 
 .tabs {
@@ -1198,4 +1226,36 @@ code {
     opacity: 1;
     transform: none;
   }
+}
+
+/* ---------- Dropdown arrows (admin) ---------- */
+
+/* Our own chevron with room around it, instead of the browser's arrow
+   (jammed against the edge, or a double arrow on iPhone). Set last so the
+   background shorthands above don't wipe it. */
+.field select,
+.toolbar select,
+select.status {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23868e96' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+.field select,
+.toolbar select {
+  padding-right: 42px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The coloured status pill in the enquiries table: a smaller arrow */
+select.status {
+  padding-right: 28px;
+  background-position: right 10px center;
+  background-size: 12px;
 }

@@ -256,6 +256,9 @@ async function deleteAdminCar(req, res, next) {
 }
 
 module.exports = {
+  adminCarSchema,
+  TRANSMISSIONS,
+  FUELS,
   listAdminCars,
   getAdminCar,
   createAdminCar,

@@ -107,3 +107,7 @@ export const adminUpdateEnquiryStatus = (id, status) =>
   request(`/api/admin/enquiries/${id}`, { method: 'PATCH', body: { status } })
 export const adminDeleteEnquiry = (id) =>
   request(`/api/admin/enquiries/${id}`, { method: 'DELETE' })
+
+// Google Sheet sync
+export const adminSheetSyncStatus = () => request('/api/admin/sheet-sync')
+export const adminRunSheetSync = () => request('/api/admin/sheet-sync', { method: 'POST' })

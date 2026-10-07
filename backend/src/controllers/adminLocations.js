@@ -116,6 +116,8 @@ async function deleteAdminLocation(req, res, next) {
 }
 
 module.exports = {
+  locationNameSchema: nameSchema,
+  locationTagSchema: tagSchema,
   listAdminLocations,
   createAdminLocation,
   updateAdminLocation,

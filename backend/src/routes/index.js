@@ -10,6 +10,7 @@ const adminCarTypesRouter = require('./adminCarTypes');
 const adminLocationsRouter = require('./adminLocations');
 const adminUploadsRouter = require('./adminUploads');
 const adminEnquiriesRouter = require('./adminEnquiries');
+const adminSheetSyncRouter = require('./adminSheetSync');
 
 // This is the single router mounted at /api in server.js.
 // As the API grows, add new routers here, e.g. router.use('/enquiries', enquiryRouter).
@@ -26,5 +27,6 @@ router.use('/admin/car-types', adminCarTypesRouter);
 router.use('/admin/locations', adminLocationsRouter);
 router.use('/admin/uploads', adminUploadsRouter);
 router.use('/admin/enquiries', adminEnquiriesRouter);
+router.use('/admin/sheet-sync', adminSheetSyncRouter);
 
 module.exports = router;

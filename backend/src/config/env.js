@@ -43,6 +43,10 @@ const env = {
   // Render URL cannot be called directly (bypassing Netlify and faking
   // client IPs). Must equal the site's API_SIGNATURE_TOKEN on Netlify.
   netlifyProxySecret: process.env.NETLIFY_PROXY_SECRET,
+  // Google Sheet that mirrors cars, locations and enquiries both ways (see
+  // src/services/sheetSync.js). Both empty = the sync is off.
+  googleSheetId: process.env.GOOGLE_SHEET_ID,
+  googleServiceAccountJson: process.env.GOOGLE_SERVICE_ACCOUNT_JSON,
 };
 
 // Admin JWTs are always HMAC-SHA256; verification accepts nothing else.

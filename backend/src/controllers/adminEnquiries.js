@@ -175,6 +175,9 @@ async function deleteEnquiry(req, res, next) {
 }
 
 module.exports = {
+  ENQUIRY_STATUSES,
+  formatDateOnly,
+  formatTimeOnly,
   listEnquiries,
   getEnquiry,
   getEnquiryStats,

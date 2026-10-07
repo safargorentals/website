@@ -116,3 +116,13 @@ ALTER TABLE admins ADD COLUMN IF NOT EXISTS token_version INT NOT NULL DEFAULT 0
 -- Prices are in Indian rupees. Tables created before this change had a
 -- 'PKR' default; this keeps them in line (safe to run repeatedly).
 ALTER TABLE cars ALTER COLUMN currency SET DEFAULT 'INR';
+
+-- Google Sheet sync (src/services/sheetSync.js): for every row on each tab,
+-- a hash of the editable cells as last written to the sheet, so a sync can
+-- tell which rows were edited in the sheet since.
+CREATE TABLE IF NOT EXISTS sheet_sync_rows (
+  tab TEXT NOT NULL,
+  row_id INT NOT NULL,
+  hash TEXT NOT NULL,
+  PRIMARY KEY (tab, row_id)
+);

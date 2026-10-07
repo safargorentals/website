@@ -72,6 +72,12 @@ async function getAllCars(filters = {}) {
   return { rows, count: countRows[0].count };
 }
 
+// Every car, oldest first (for the Google Sheet)
+async function getAllCarsUnpaged() {
+  const { rows } = await getPool().query('SELECT * FROM cars ORDER BY id ASC');
+  return rows;
+}
+
 // Cars for the home page "featured" section
 async function getFeaturedCars() {
   const { rows } = await getPool().query(
@@ -159,6 +165,7 @@ async function getCarStats() {
 
 module.exports = {
   getAllCars,
+  getAllCarsUnpaged,
   getFeaturedCars,
   getCarById,
   createCar,
