@@ -2,12 +2,13 @@ import { useState } from 'react'
 import useCarTypes from '../carTypes.js'
 import useLocations, { locationLabel } from '../locations.js'
 import { shortDate, todayString } from '../constants.js'
+import { maxDate, tripErrors } from '../validation.js'
 import Icon from './Icon.jsx'
 
 // Dropdown of the locations managed in the admin panel
 function LocationSelect({ locations, value, onChange }) {
   return (
-    <select value={value} onChange={onChange} className={value ? '' : 'is-empty'}>
+    <select value={value} onChange={onChange} className={value ? '' : 'is-empty'} title={value || undefined}>
       <option value="">Select location</option>
       {locations.map((l) => (
         <option key={l.id} value={l.name}>
@@ -52,8 +53,10 @@ export default function SearchWidget({ initial, onSearch }) {
 
   function submit(e) {
     e.preventDefault()
-    if (form.startDate < todayString()) return setError('Pickup date cannot be in the past')
-    if (form.endDate < form.startDate) return setError('Return date must be on or after the pickup date')
+    // Show the first problem (pickup date, return date, then the times)
+    const errs = tripErrors(form)
+    const first = ['startDate', 'endDate', 'pickupTime', 'dropoffTime'].find((k) => errs[k])
+    if (first) return setError(errs[first])
     onSearch({
       ...form,
       pickupLocation: form.pickupLocation.trim(),
@@ -97,7 +100,14 @@ export default function SearchWidget({ initial, onSearch }) {
           <div className="sg-pass__when">
             <label className="sg-pass__field">
               <span>Pickup</span>
-              <input type="date" value={form.startDate} min={todayString()} onChange={set('startDate')} required />
+              <input
+                type="date"
+                value={form.startDate}
+                min={todayString()}
+                max={maxDate()}
+                onChange={set('startDate')}
+                required
+              />
             </label>
             <label className="sg-pass__field sg-pass__field--time">
               <span>Time</span>
@@ -107,7 +117,14 @@ export default function SearchWidget({ initial, onSearch }) {
           <div className="sg-pass__when">
             <label className="sg-pass__field">
               <span>Return</span>
-              <input type="date" value={form.endDate} min={form.startDate} onChange={set('endDate')} required />
+              <input
+                type="date"
+                value={form.endDate}
+                min={form.startDate}
+                max={maxDate()}
+                onChange={set('endDate')}
+                required
+              />
             </label>
             <label className="sg-pass__field sg-pass__field--time">
               <span>Time</span>

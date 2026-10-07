@@ -3,6 +3,19 @@ import { createEnquiry } from '../api.js'
 import useCarTypes from '../carTypes.js'
 import useLocations, { locationLabel } from '../locations.js'
 import { formatPrice, rentalDays, todayString } from '../constants.js'
+import {
+  EMAIL_MAX,
+  MESSAGE_MAX,
+  NAME_MAX,
+  cleanMobile,
+  cleanName,
+  emailError,
+  formatMobile,
+  maxDate,
+  mobileError,
+  nameError,
+  tripErrors,
+} from '../validation.js'
 
 const EMPTY = {
   name: '',
@@ -18,24 +31,16 @@ const EMPTY = {
   website: '', // honeypot, always empty for humans
 }
 
-// Mirrors the backend rules, plus the workflow's 10-13 digit phone rule.
+// Rules in validation.js; the backend checks them again
 function validate(f) {
-  const e = {}
-  if (f.name.trim().length < 2) e.name = 'Please enter your name'
-  const digits = f.phone.replace(/\D/g, '')
-  if (!/^[0-9\s+\-()]+$/.test(f.phone.trim()) || digits.length < 10 || digits.length > 13) {
-    e.phone = 'Enter a valid phone number (10 to 13 digits)'
-  }
-  if (f.email && !/^\S+@\S+\.\S+$/.test(f.email.trim())) e.email = 'Enter a valid email'
-  if (f.pickupLocation.trim().length < 2) e.pickupLocation = 'Choose a pickup location'
-  if (f.dropoffLocation.trim().length < 2) e.dropoffLocation = 'Choose a drop-off location'
-  if (!f.startDate) e.startDate = 'Choose a pickup date'
-  else if (f.startDate < todayString()) e.startDate = 'Pickup date cannot be in the past'
-  if (!f.endDate) e.endDate = 'Choose a return date'
-  else if (f.startDate && f.endDate < f.startDate) e.endDate = 'Return date must be on or after the pickup date'
-  if (!f.pickupTime) e.pickupTime = 'Choose a pickup time'
-  if (!f.dropoffTime) e.dropoffTime = 'Choose a return time'
-  if (f.message.length > 1000) e.message = 'Message must be at most 1000 characters'
+  const e = { ...tripErrors(f) }
+  const add = (key, msg) => msg && (e[key] = msg)
+  add('name', nameError(f.name))
+  add('phone', mobileError(f.phone))
+  add('email', emailError(f.email))
+  if (!f.pickupLocation) e.pickupLocation = 'Choose a pickup location'
+  if (!f.dropoffLocation) e.dropoffLocation = 'Choose a drop-off location'
+  if (f.message.length > MESSAGE_MAX) e.message = `Message must be at most ${MESSAGE_MAX} characters`
   return e
 }
 
@@ -82,9 +87,25 @@ export default function EnquiryModal({ car, trip, onClose }) {
     }
   }, [onClose])
 
+  // Names and phone numbers are cleaned as they are typed, so letters can't
+  // go into the phone box and the number can't get longer than 10 digits
+  const CLEAN = { name: cleanName, phone: cleanMobile }
+
   const set = (key) => (e) => {
-    setForm((f) => ({ ...f, [key]: e.target.value }))
+    const value = CLEAN[key] ? CLEAN[key](e.target.value) : e.target.value
+    setForm((f) => {
+      const next = { ...f, [key]: value }
+      // Keep the return date on or after the pickup date
+      if (key === 'startDate' && next.endDate && next.endDate < value) next.endDate = value
+      return next
+    })
     setErrors((er) => ({ ...er, [key]: undefined, form: undefined }))
+  }
+
+  // Show a field's problem as soon as the visitor leaves it
+  const check = (key) => () => {
+    const msg = validate(form)[key]
+    if (msg && form[key]) setErrors((er) => ({ ...er, [key]: msg }))
   }
 
   async function handleSubmit(e) {
@@ -98,6 +119,8 @@ export default function EnquiryModal({ car, trip, onClose }) {
       await createEnquiry({
         ...form,
         carId: car.id,
+        name: form.name.trim(),
+        phone: formatMobile(form.phone),
         email: form.email.trim(),
         message: form.message.trim() || undefined,
       })
@@ -121,8 +144,40 @@ export default function EnquiryModal({ car, trip, onClose }) {
         {label}
         {required && <em> *</em>}
       </span>
-      <input value={form[key]} onChange={set(key)} {...props} />
+      <input
+        value={form[key]}
+        onChange={set(key)}
+        onBlur={check(key)}
+        aria-invalid={!!errors[key]}
+        {...props}
+      />
       {errors[key] && <small>{errors[key]}</small>}
+    </label>
+  )
+
+  // "+91" fixed in front, then exactly 10 digits
+  const phoneField = (
+    <label className={`field ${errors.phone ? 'field--error' : ''}`}>
+      <span>
+        Mobile number<em> *</em>
+      </span>
+      <span className="sg-phone">
+        <span className="sg-phone__code" aria-hidden="true">
+          +91
+        </span>
+        <input
+          type="tel"
+          inputMode="numeric"
+          autoComplete="tel-national"
+          placeholder="98765 43210"
+          value={form.phone}
+          onChange={set('phone')}
+          onBlur={check('phone')}
+          aria-invalid={!!errors.phone}
+          aria-label="Mobile number, 10 digits"
+        />
+      </span>
+      {errors.phone && <small>{errors.phone}</small>}
     </label>
   )
 
@@ -134,7 +189,7 @@ export default function EnquiryModal({ car, trip, onClose }) {
         {label}
         <em> *</em>
       </span>
-      <select value={form[key]} onChange={set(key)}>
+      <select value={form[key]} onChange={set(key)} aria-invalid={!!errors[key]}>
         <option value="">Select location</option>
         {locations.map((l) => (
           <option key={l.id} value={l.name}>
@@ -189,24 +244,33 @@ export default function EnquiryModal({ car, trip, onClose }) {
             </div>
 
             <div className="grid-2">
-              {field('name', 'Your name', { autoComplete: 'name', autoFocus: true }, true)}
-              {field('phone', 'Phone', { type: 'tel', autoComplete: 'tel', placeholder: '+91 98765 43210' }, true)}
+              {field('name', 'Your name', { autoComplete: 'name', autoFocus: true, maxLength: NAME_MAX }, true)}
+              {phoneField}
             </div>
 
-            {field('email', 'Email (optional)', { type: 'email', autoComplete: 'email' })}
+            {field('email', 'Email (optional)', {
+              type: 'email',
+              autoComplete: 'email',
+              inputMode: 'email',
+              maxLength: EMAIL_MAX,
+              placeholder: 'name@example.com',
+            })}
 
             <div className="grid-2">
-              {field('startDate', 'Pickup date', { type: 'date', min: todayString() }, true)}
+              {field('startDate', 'Pickup date', { type: 'date', min: todayString(), max: maxDate() }, true)}
               {field('pickupTime', 'Pickup time', { type: 'time' }, true)}
-              {field('endDate', 'Return date', { type: 'date', min: form.startDate || todayString() }, true)}
+              {field('endDate', 'Return date', { type: 'date', min: form.startDate || todayString(), max: maxDate() }, true)}
               {field('dropoffTime', 'Return time', { type: 'time' }, true)}
               {locationField('pickupLocation', 'Pickup location')}
               {locationField('dropoffLocation', 'Drop-off location')}
             </div>
 
             <label className={`field ${errors.message ? 'field--error' : ''}`}>
-              <span>Message</span>
-              <textarea rows={3} value={form.message} onChange={set('message')} maxLength={1000} />
+              <span>Message (optional)</span>
+              <textarea rows={3} value={form.message} onChange={set('message')} maxLength={MESSAGE_MAX} />
+              <small className="sg-count">
+                {form.message.length}/{MESSAGE_MAX}
+              </small>
               {errors.message && <small>{errors.message}</small>}
             </label>
 
@@ -226,6 +290,17 @@ export default function EnquiryModal({ car, trip, onClose }) {
               {submitting ? 'Sending…' : 'Send booking request'}
             </button>
             <p className="sg-modal__note">Free to send. We call you to confirm before anything is paid.</p>
+            <p className="sg-modal__legal">
+              By sending this request you agree to our{' '}
+              <a href="/terms" target="_blank" rel="noopener">
+                Terms
+              </a>{' '}
+              and{' '}
+              <a href="/privacy" target="_blank" rel="noopener">
+                Privacy Policy
+              </a>
+              .
+            </p>
           </form>
         )}
       </div>

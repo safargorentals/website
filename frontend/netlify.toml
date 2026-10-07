@@ -29,6 +29,22 @@
   to = "/"
   status = 301
 
+# Legal pages, pre-rendered by scripts/prerender.js
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy.html"
+  status = 200
+
+[[redirects]]
+  from = "/terms"
+  to = "/terms.html"
+  status = 200
+
+[[redirects]]
+  from = "/cancellation-policy"
+  to = "/cancellation-policy.html"
+  status = 200
+
 # index.html holds the pre-rendered home page (scripts/prerender.js);
 # app.html is the empty app shell. The admin pages load the shell and React
 # Router shows the right page.

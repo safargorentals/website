@@ -6,6 +6,8 @@ const { notifyNewEnquiry } = require('../services/notifyEnquiry');
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const PHONE_RE = /^[0-9\s+\-()]+$/;
+// Letters (any language), spaces and . ' -
+const NAME_RE = /^[\p{L}][\p{L}\p{M} .'-]*$/u;
 
 // Today as YYYY-MM-DD, so date strings can be compared directly
 function todayString() {
@@ -30,15 +32,23 @@ const enquiryBodySchema = z
       .string()
       .trim()
       .min(2, 'Name must be at least 2 characters')
-      .max(100, 'Name must be at most 100 characters'),
+      .max(100, 'Name must be at most 100 characters')
+      .regex(NAME_RE, 'Name may only contain letters, spaces and . \' -'),
     phone: z
       .string()
       .trim()
       .regex(PHONE_RE, 'Phone may only contain digits, spaces and + - ( )')
       .min(7, 'Phone must be at least 7 characters')
-      .max(20, 'Phone must be at most 20 characters'),
+      .max(20, 'Phone must be at most 20 characters')
+      .refine((v) => {
+        const digits = v.replace(/\D/g, '').length;
+        return digits >= 10 && digits <= 13;
+      }, 'Phone must have 10 to 13 digits'),
     email: z
-      .union([z.literal(''), z.string().trim().email('Must be a valid email')])
+      .union([
+        z.literal(''),
+        z.string().trim().max(100, 'Email must be at most 100 characters').email('Must be a valid email'),
+      ])
       .optional(),
     carId: z
       .union([

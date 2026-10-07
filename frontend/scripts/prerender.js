@@ -4,6 +4,8 @@
 // - fills dist/index.html with the rendered home page, plus the tags search
 //   engines and link previews read: canonical URL, Open Graph, and
 //   structured data (business details and FAQs)
+// - renders the legal pages (privacy, terms, cancellation) to
+//   dist/<name>.html, each with its own title, description and canonical URL
 // - writes dist/sitemap.xml and points robots.txt at it
 //
 // The site address comes from SITE_URL, or from URL, which Netlify sets
@@ -16,7 +18,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const dist = path.join(root, 'dist')
 const ssrEntry = path.join(root, 'dist-ssr', 'entry-server.js')
 
-const { render, BUSINESS, addressLine, FAQ_GROUPS } = await import(pathToFileURL(ssrEntry).href)
+const { render, BUSINESS, addressLine, FAQ_GROUPS, LEGAL_LIST } = await import(pathToFileURL(ssrEntry).href)
 
 const siteUrl = (process.env.SITE_URL || process.env.URL || '').replace(/\/$/, '')
 const TITLE = 'Drive Kochi | Self-drive car rental in Kochi (Cochin)'
@@ -131,22 +133,44 @@ const page = shell
   .replace('<div id="root"></div>', `<div id="root">${render('/')}</div>`)
 fs.writeFileSync(path.join(dist, 'index.html'), page)
 
+// Legal pages: their own title / description / canonical, and no hero
+// image preload (only the home page shows it)
+for (const p of LEGAL_LIST) {
+  const title = `${p.title} | Drive Kochi`
+  const html = shell
+    .replace(/<title>[^<]*<\/title>/, `<title>${escapeAttr(title)}</title>`)
+    .replace(/(<meta\s+name="description"\s+content=")[^"]*(")/, `$1${escapeAttr(p.description)}$2`)
+    .replace(/\s*<link rel="preload" as="image" href="\/images\/hero.webp" \/>/, '')
+    .replace(
+      '</head>',
+      `${siteUrl ? `  <link rel="canonical" href="${siteUrl}${p.path}" />\n  ` : ''}  <meta property="og:title" content="${escapeAttr(title)}" />\n  </head>`,
+    )
+    .replace('<div id="root"></div>', `<div id="root">${render(p.path)}</div>`)
+  fs.writeFileSync(path.join(dist, `${p.path.slice(1)}.html`), html)
+}
+
+const sitemapUrls = ['/', ...LEGAL_LIST.map((p) => p.path)]
+
 if (siteUrl) {
   fs.writeFileSync(
     path.join(dist, 'sitemap.xml'),
     `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>${siteUrl}/</loc>
+${sitemapUrls
+  .map(
+    (u) => `  <url>
+    <loc>${siteUrl}${u}</loc>
     <lastmod>${new Date().toISOString().slice(0, 10)}</lastmod>
-  </url>
+  </url>`,
+  )
+  .join('\n')}
 </urlset>
 `,
   )
   fs.appendFileSync(path.join(dist, 'robots.txt'), `\nSitemap: ${siteUrl}/sitemap.xml\n`)
 }
 
-console.log(`prerender: home page rendered${siteUrl ? ` for ${siteUrl}` : ''}`)
+console.log(`prerender: home page and ${LEGAL_LIST.length} legal pages rendered${siteUrl ? ` for ${siteUrl}` : ''}`)
 if (!siteUrl) console.warn('prerender: no SITE_URL / URL set, so no canonical URL, share image or sitemap')
 if (!addressLine()) console.warn('prerender: no street address in src/business.js yet')
 

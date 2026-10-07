@@ -6,6 +6,7 @@ import EnquiryModal from '../components/EnquiryModal.jsx'
 import Icon from '../components/Icon.jsx'
 import Logo, { LogoWord } from '../components/Logo.jsx'
 import SearchWidget from '../components/SearchWidget.jsx'
+import { LegalLinks } from './Legal.jsx'
 import useReveal from '../useReveal.js'
 import useTheme from '../theme.js'
 import { useIsAdmin } from './admin/session.js'
@@ -551,7 +552,7 @@ export default function Home() {
         </p>
         <div className="sg-wrap sg-footer__bottom">
           <span>© {YEAR} Drive Kochi · A unit of AVS Rent A Car</span>
-          <span>Drive safe. Come back with stories.</span>
+          <LegalLinks />
         </div>
       </footer>
 

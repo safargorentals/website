@@ -127,12 +127,12 @@ export default function CarForm({ car, onClose, onSaved, onUnauthorized }) {
         <div className="grid-2">
           <label className={cls('name')}>
             <span>Name *</span>
-            <input value={form.name} onChange={set('name')} placeholder="Toyota Fortuner" />
+            <input value={form.name} onChange={set('name')} placeholder="Toyota Fortuner" maxLength={100} />
             {err('name')}
           </label>
           <label className={cls('brand')}>
             <span>Brand *</span>
-            <input value={form.brand} onChange={set('brand')} placeholder="Toyota" />
+            <input value={form.brand} onChange={set('brand')} placeholder="Toyota" maxLength={50} />
             {err('brand')}
           </label>
           <label className={cls('type')}>
@@ -152,7 +152,7 @@ export default function CarForm({ car, onClose, onSaved, onUnauthorized }) {
           </label>
           <label className={cls('seats')}>
             <span>Seats *</span>
-            <input type="number" min={1} max={20} value={form.seats} onChange={set('seats')} />
+            <input type="number" inputMode="numeric" min={1} max={20} step={1} value={form.seats} onChange={set('seats')} />
             {err('seats')}
           </label>
           <label className={cls('transmission')}>
@@ -179,12 +179,24 @@ export default function CarForm({ car, onClose, onSaved, onUnauthorized }) {
           </label>
           <label className={cls('pricePerDay')}>
             <span>Price per day *</span>
-            <input type="number" min={0} max={1000000} value={form.pricePerDay} onChange={set('pricePerDay')} />
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={1000000}
+              step={1}
+              value={form.pricePerDay}
+              onChange={set('pricePerDay')}
+            />
             {err('pricePerDay')}
           </label>
           <label className={cls('currency')}>
             <span>Currency</span>
-            <input value={form.currency} onChange={set('currency')} maxLength={3} />
+            <input
+              value={form.currency}
+              onChange={(e) => set('currency')({ target: { value: e.target.value.toUpperCase().replace(/[^A-Z]/g, '') } })}
+              maxLength={3}
+            />
             {err('currency')}
           </label>
         </div>
