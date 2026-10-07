@@ -54,9 +54,11 @@ function mapServerErrors(fields) {
   return e
 }
 
-// Pre-fill from the hero search, if the visitor used it
+// Pre-fill from the hero search, if the visitor used it; otherwise the same
+// default dates as the search box (an empty date box on iPhone shows a grey
+// date that looks filled in)
 function initialForm(trip) {
-  if (!trip) return EMPTY
+  if (!trip) return { ...EMPTY, startDate: todayString(1), endDate: todayString(2) }
   const pick = (k) => trip[k] || EMPTY[k]
   return {
     ...EMPTY,

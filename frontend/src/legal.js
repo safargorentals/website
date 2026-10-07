@@ -30,7 +30,7 @@ export const LEGAL_PAGES = {
             'anything you write in the message box',
           ],
           'When you rent a car, we also see the documents the rental needs (driving licence and a government ID, for example). We check these in person; they are not uploaded through this website.',
-          'We do not ask for payment details on this website, and we do not take payments online.',
+          'We do not ask for payment details or take payments on this website.',
         ],
       },
       {
@@ -125,7 +125,8 @@ export const LEGAL_PAGES = {
       {
         heading: 'Payment and security deposit',
         body: [
-          'Payment is arranged when we confirm your booking; nothing is charged on this website. A refundable security deposit is taken at pickup. It is returned within 3 working days after you return the car, less any amounts you owe under these terms, such as damage, fines or extra charges.',
+          'Nothing is charged on this website. A booking amount of ₹1,000 is required to confirm your reservation; it is adjusted against the total rental amount at the time of the trip, and it is non-refundable once the booking is confirmed (see our Refund & Cancellation Policy).',
+          'A refundable security deposit is taken at pickup. It is refunded immediately after the trip is completed and the car is returned in line with these terms, less any amounts you owe, such as damage, fines or extra charges.',
         ],
       },
       {
@@ -155,9 +156,9 @@ export const LEGAL_PAGES = {
         ],
       },
       {
-        heading: 'Cancellations',
-        body: ['See our Cancellation & Refund Policy.'],
-        link: { to: '/cancellation-policy', label: 'Cancellation & Refund Policy' },
+        heading: 'Cancellations and rescheduling',
+        body: ['See our Refund & Cancellation Policy.'],
+        link: { to: '/cancellation-policy', label: 'Refund & Cancellation Policy' },
       },
       {
         heading: 'The website',
@@ -178,48 +179,47 @@ export const LEGAL_PAGES = {
 
   cancellation: {
     path: '/cancellation-policy',
-    title: 'Cancellation & Refund Policy',
-    description: 'How to cancel a Drive Kochi booking, and how refunds and the security deposit work.',
-    intro: 'Plans change. This page explains how cancellations and refunds work at Drive Kochi.',
+    title: 'Refund & Cancellation Policy',
+    description:
+      'Drive Kochi booking amount, security deposit refunds, cancellations and rescheduling.',
     sections: [
       {
-        heading: 'Booking requests',
+        heading: '1. Refund Policy',
         body: [
-          'A booking request sent through this website is free and does not commit you to anything. If you change your mind before we confirm, just tell us, or ignore our call. There is nothing to pay.',
+          'Any refundable security deposit collected for the vehicle will be refunded to the customer immediately after the trip is completed and the vehicle is returned, subject to the vehicle being returned in accordance with the agreed rental terms and conditions.',
         ],
       },
       {
-        heading: 'Cancelling a confirmed booking',
+        heading: '2. Booking Amount',
         body: [
-          `To cancel a confirmed booking, ${CONTACT.charAt(0).toLowerCase()}${CONTACT.slice(1)} Please tell us as early as you can.`,
-          'Any cancellation charge depends on how close to the pickup time you cancel, and is told to you when we confirm your booking. If you paid anything in advance, we refund it after deducting that charge.',
+          'A booking amount of ₹1,000 is required to confirm the reservation. This amount will be adjusted against the total rental amount at the time of the trip.',
         ],
       },
       {
-        heading: 'If we cancel',
+        heading: '3. Cancellation Policy',
         body: [
-          'If we cannot provide the car you booked, we will offer you a similar car or a full refund of anything you paid in advance.',
+          'Once a booking is confirmed, the ₹1,000 booking amount is non-refundable. In case the customer is unable to proceed with the trip, the booking amount cannot be refunded.',
         ],
       },
       {
-        heading: 'Returning early',
-        body: ['If you return the car before the agreed time, whether any unused days are refunded is agreed with you at the time.'],
-      },
-      {
-        heading: 'Security deposit',
+        heading: '4. Rescheduling Policy',
         body: [
-          'The security deposit is refunded within 3 working days of returning the car, after deducting any damage, fines or extra charges under our Terms & Conditions.',
+          'Instead of cancelling, customers may reschedule their booking to another available date within the same calendar month, subject to vehicle availability. Rescheduling requests should be communicated in advance.',
         ],
       },
       {
-        heading: 'How refunds are paid',
+        heading: '5. Month-End Closure',
         body: [
-          'Refunds go back the way you paid, or by bank transfer / UPI to your account. Your bank may take a few more days to show the money.',
+          'If the customer does not use or reschedule the booking within the same calendar month, the booking will be considered closed automatically at the end of that month, and the booking amount will not be refundable or carried forward to the following month.',
         ],
+      },
+      {
+        heading: 'Note',
+        body: ['All refunds and rescheduling are subject to the applicable rental terms and vehicle availability.'],
       },
       {
         heading: 'Contact',
-        body: [`Questions about a cancellation or refund? ${CONTACT}`],
+        body: [`To reschedule, or for any question about a booking or refund: ${CONTACT}`],
       },
     ],
   },

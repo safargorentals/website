@@ -51,7 +51,7 @@ export default function Legal({ page }) {
         </Link>
         <p className="sg-kicker">Last updated {UPDATED}</p>
         <h1>{page.title}</h1>
-        <p className="sg-legal__intro">{page.intro}</p>
+        {page.intro && <p className="sg-legal__intro">{page.intro}</p>}
 
         {page.sections.map((s) => (
           <section key={s.heading}>
