@@ -2343,6 +2343,36 @@ body:has(.sg) {
   text-underline-offset: 2px;
 }
 
+/* SMS code step */
+.sg-otp__lead {
+  margin: 4px 0 20px;
+  color: var(--sg-ink-2);
+}
+
+.sg-otp__lead strong {
+  color: var(--sg-ink);
+  white-space: nowrap;
+}
+
+.sg-modal .field input.sg-otp__code {
+  font: 600 1.6rem/1 var(--sg-mono);
+  letter-spacing: 0.5em;
+  text-align: center;
+}
+
+.sg-otp__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 16px;
+}
+
+.sg-otp__links .sg-textbtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .sg-modal .success-icon {
   border: 2px solid #17201b;
   background: var(--sg-yellow);

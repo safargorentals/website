@@ -70,12 +70,14 @@
 # script in index.html (allowed by its hash - if you edit that script, update
 # the hash: sha256 of its exact text, base64). Fonts from Google Fonts,
 # images from anywhere over https (car photos), API calls only to this site.
+# Google / Firebase are allowed for the SMS code check on the booking form
+# (reCAPTCHA scripts and frames, Firebase Authentication API calls).
 # frame-ancestors 'none' + X-Frame-Options stop other sites framing the
 # pages (clickjacking).
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-NRVOQup4X13QuKbcQW8mifjkZR5Wzi+SPFpN2W2pw64='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-NRVOQup4X13QuKbcQW8mifjkZR5Wzi+SPFpN2W2pw64=' https://www.google.com https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.google.com; frame-src https://www.google.com https://recaptcha.google.com https://drivekochi-a43aa.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"

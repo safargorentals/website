@@ -2,6 +2,7 @@ const { z } = require('zod');
 const enquiriesModel = require('../models/enquiries');
 const carsModel = require('../models/cars');
 const { notifyNewEnquiry } = require('../services/notifyEnquiry');
+const phoneToken = require('../services/phoneToken');
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -129,6 +130,24 @@ async function createEnquiry(req, res, next) {
     }
     const data = parsed.data;
 
+    // The number must have been verified by SMS code (when Firebase is set
+    // up). The browser sends Firebase's proof as phoneToken.
+    if (phoneToken.isEnabled()) {
+      let verified;
+      try {
+        verified = await phoneToken.verifyPhoneToken(body.phoneToken);
+      } catch (err) {
+        if (!(err instanceof phoneToken.PhoneTokenError)) throw err;
+        return res.status(400).json({ error: 'Validation failed', fields: { phoneToken: err.message } });
+      }
+      if (!phoneToken.samePhone(verified, data.phone)) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          fields: { phoneToken: 'The number you verified is different from the one in the form. Please verify it again' },
+        });
+      }
+    }
+
     // If a car was chosen, it must actually exist
     let car = null;
     if (data.carId != null) {
@@ -179,4 +198,4 @@ async function createEnquiry(req, res, next) {
   }
 }
 
-module.exports = { createEnquiry };
+module.exports = { createEnquiry, NAME_RE, PHONE_RE, isRealDate };

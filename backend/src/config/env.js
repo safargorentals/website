@@ -47,6 +47,9 @@ const env = {
   // src/services/sheetSync.js). Both empty = the sync is off.
   googleSheetId: process.env.GOOGLE_SHEET_ID,
   googleServiceAccountJson: process.env.GOOGLE_SERVICE_ACCOUNT_JSON,
+  // Firebase project whose SMS codes verify customers' numbers before an
+  // enquiry is saved (src/services/phoneToken.js). Empty = no SMS check.
+  firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
 };
 
 // Admin JWTs are always HMAC-SHA256; verification accepts nothing else.

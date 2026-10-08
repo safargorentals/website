@@ -16,6 +16,9 @@ import {
   nameError,
   tripErrors,
 } from '../validation.js'
+import { PHONE_OTP_ENABLED, confirmCode, isSetupError, otpErrorMessage, sendCode, tokenIfVerified } from '../phoneVerify.js'
+
+const RESEND_SECONDS = 30
 
 const EMPTY = {
   name: '',
@@ -78,6 +81,16 @@ export default function EnquiryModal({ car, trip, onClose }) {
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
+  // The SMS code step: { confirmation, code, error, resendAt } once a code is sent
+  const [otp, setOtp] = useState(null)
+  const [now, setNow] = useState(() => Date.now())
+
+  // Ticks the "Resend code in 25s" countdown
+  useEffect(() => {
+    if (!otp) return
+    const timer = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(timer)
+  }, [otp])
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose()
@@ -110,13 +123,9 @@ export default function EnquiryModal({ car, trip, onClose }) {
     if (msg && form[key]) setErrors((er) => ({ ...er, [key]: msg }))
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    const errs = validate(form)
-    setErrors(errs)
-    if (Object.keys(errs).length) return
-
-    setSubmitting(true)
+  // Saves the enquiry. phoneToken: proof from Firebase that the number was
+  // verified by SMS (the backend checks it)
+  async function send(phoneToken) {
     try {
       await createEnquiry({
         ...form,
@@ -125,18 +134,80 @@ export default function EnquiryModal({ car, trip, onClose }) {
         phone: formatMobile(form.phone),
         email: form.email.trim(),
         message: form.message.trim() || undefined,
+        phoneToken,
       })
       setDone(true)
     } catch (err) {
       if (err.status === 400 && Object.keys(err.fields).length) {
-        setErrors(mapServerErrors(err.fields))
+        // Back to the form, which shows the problems (a phone check problem
+        // shows at the bottom)
+        const fieldErrors = mapServerErrors(err.fields)
+        if (fieldErrors.phoneToken) fieldErrors.form = fieldErrors.phoneToken
+        setErrors(fieldErrors)
+        setOtp(null)
+      } else if (otp) {
+        setOtp((o) => o && { ...o, error: err.message })
       } else {
         setErrors({ form: err.message })
       }
+    }
+  }
+
+  // Texts a code to the number (Google's invisible reCAPTCHA checks for bots)
+  async function requestCode() {
+    const confirmation = await sendCode(form.phone, 'otp-recaptcha')
+    const sentAt = Date.now()
+    setNow(sentAt)
+    setOtp({ confirmation, code: '', error: '', resendAt: sentAt + RESEND_SECONDS * 1000 })
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    const errs = validate(form)
+    setErrors(errs)
+    if (Object.keys(errs).length) return
+
+    setSubmitting(true)
+    try {
+      if (!PHONE_OTP_ENABLED) return await send(undefined)
+      // Number already verified in this tab (a second enquiry): no new SMS
+      const token = await tokenIfVerified(form.phone)
+      if (token) return await send(token)
+      await requestCode()
+    } catch (err) {
+      if (isSetupError(err)) return await send(undefined)
+      setErrors({ form: err.code ? otpErrorMessage(err) : err.message })
     } finally {
       setSubmitting(false)
     }
   }
+
+  async function verifyCode(e) {
+    e.preventDefault()
+    if (!/^\d{6}$/.test(otp.code)) return setOtp({ ...otp, error: 'Enter the 6-digit code from the SMS' })
+    setSubmitting(true)
+    try {
+      const token = await confirmCode(otp.confirmation, otp.code)
+      await send(token)
+    } catch (err) {
+      setOtp((o) => o && { ...o, error: otpErrorMessage(err) })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function resend() {
+    setSubmitting(true)
+    try {
+      await requestCode()
+    } catch (err) {
+      setOtp((o) => o && { ...o, error: otpErrorMessage(err) })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const resendIn = otp ? Math.max(0, Math.ceil((otp.resendAt - now) / 1000)) : 0
 
   const days = rentalDays(form)
 
@@ -222,6 +293,43 @@ export default function EnquiryModal({ car, trip, onClose }) {
               Done
             </button>
           </div>
+        ) : otp ? (
+          <form className="sg-otp" onSubmit={verifyCode} noValidate>
+            <p className="sg-kicker">Step 2 of 2</p>
+            <h2 id="enquiry-title">
+              Verify your <em>number</em>
+            </h2>
+            <p className="sg-otp__lead">
+              We sent a 6-digit code by SMS to <strong>{formatMobile(form.phone)}</strong>. Enter it to send your booking
+              request.
+            </p>
+            <label className={`field ${otp.error ? 'field--error' : ''}`}>
+              <span>SMS code</span>
+              <input
+                className="sg-otp__code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="••••••"
+                maxLength={6}
+                value={otp.code}
+                onChange={(e) => setOtp({ ...otp, code: e.target.value.replace(/\D/g, '').slice(0, 6), error: '' })}
+                autoFocus
+                aria-invalid={!!otp.error}
+              />
+              {otp.error && <small>{otp.error}</small>}
+            </label>
+            <button className="sg-btn sg-btn--yellow sg-btn--lg sg-btn--block" disabled={submitting}>
+              {submitting ? 'Checking…' : 'Verify and send request'}
+            </button>
+            <div className="sg-otp__links">
+              <button type="button" className="sg-textbtn" onClick={resend} disabled={submitting || resendIn > 0}>
+                {resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}
+              </button>
+              <button type="button" className="sg-textbtn" onClick={() => setOtp(null)} disabled={submitting}>
+                Change number
+              </button>
+            </div>
+          </form>
         ) : (
           <form onSubmit={handleSubmit} noValidate>
             <p className="sg-kicker">Booking request</p>
@@ -289,9 +397,12 @@ export default function EnquiryModal({ car, trip, onClose }) {
             {errors.form && <p className="alert alert--error">{errors.form}</p>}
 
             <button className="sg-btn sg-btn--yellow sg-btn--lg sg-btn--block" disabled={submitting}>
-              {submitting ? 'Sending…' : 'Send booking request'}
+              {submitting ? 'Please wait…' : PHONE_OTP_ENABLED ? 'Continue' : 'Send booking request'}
             </button>
-            <p className="sg-modal__note">Free to send. We call you to confirm before anything is paid.</p>
+            <p className="sg-modal__note">
+              {PHONE_OTP_ENABLED ? "Next, we'll text you a code to confirm your number. " : ''}Free to send. We call you to
+              confirm before anything is paid.
+            </p>
             <p className="sg-modal__legal">
               By sending this request you agree to our{' '}
               <a href="/terms" target="_blank" rel="noopener">
@@ -305,6 +416,8 @@ export default function EnquiryModal({ car, trip, onClose }) {
             </p>
           </form>
         )}
+        {/* Google's invisible reCAPTCHA for the SMS code (no puzzle for most people) */}
+        <div id="otp-recaptcha" />
       </div>
     </div>
   )
