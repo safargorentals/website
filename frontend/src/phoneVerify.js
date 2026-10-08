@@ -75,8 +75,10 @@ export async function confirmCode(confirmation, code) {
 // that only while it isn't requiring codes (no FIREBASE_PROJECT_ID), so
 // bookings keep working while Firebase is being set up.
 export function isSetupError(err) {
-  const code = err?.code || ''
-  return /operation-not-allowed|billing|unauthorized-domain|invalid-api-key|app-not-authorized|admin-restricted/.test(code)
+  // Firebase sometimes only puts the server's reason in the message
+  // (e.g. BILLING_NOT_ENABLED: real SMS needs the Blaze plan)
+  const text = `${err?.code || ''} ${err?.message || ''}`.toLowerCase()
+  return /operation-not-allowed|billing|unauthorized-domain|invalid-api-key|app-not-authorized|admin-restricted/.test(text)
 }
 
 // Firebase error codes -> what the customer should do

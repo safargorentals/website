@@ -172,6 +172,8 @@ export default function EnquiryModal({ car, trip, onClose }) {
       setNow(sentAt)
       setVerify({ status: 'sent', confirmation, code: '', error: '', resendAt: sentAt + RESEND_SECONDS * 1000 })
     } catch (err) {
+      // The exact reason, for whoever is setting Firebase up (browser console)
+      console.warn('SMS code not sent:', err?.code || err)
       if (isSetupError(err)) return setVerify({ status: 'skipped' })
       setVerify({ status: 'idle' })
       setErrors((er) => ({ ...er, phone: otpErrorMessage(err) }))
@@ -216,6 +218,9 @@ export default function EnquiryModal({ car, trip, onClose }) {
 
   const resendIn = verify.status === 'sent' ? Math.max(0, Math.ceil((verify.resendAt - now) / 1000)) : 0
   const verified = verify.status === 'verified'
+  // The send button waits for the number check ('skipped': Firebase not set
+  // up yet, so it can't be done, see isSetupError)
+  const needsVerify = PHONE_OTP_ENABLED && !verified && verify.status !== 'skipped'
 
   const days = rentalDays(form)
 
@@ -283,6 +288,11 @@ export default function EnquiryModal({ car, trip, onClose }) {
         )}
       </div>
       {errors.phone && <small>{errors.phone}</small>}
+      {verify.status === 'skipped' && (
+        <p className="sg-verify__note">
+          We couldn't send a code right now. You can still send your request; we'll confirm your number when we call.
+        </p>
+      )}
 
       {verify.status === 'sent' && (
         <div className={`sg-otpbox ${verify.error ? 'has-error' : ''}`}>
@@ -424,9 +434,10 @@ export default function EnquiryModal({ car, trip, onClose }) {
 
             {errors.form && <p className="alert alert--error">{errors.form}</p>}
 
-            <button className="sg-btn sg-btn--yellow sg-btn--lg sg-btn--block" disabled={submitting}>
+            <button className="sg-btn sg-btn--yellow sg-btn--lg sg-btn--block" disabled={submitting || needsVerify}>
               {submitting ? 'Sending…' : 'Send booking request'}
             </button>
+            {needsVerify && <p className="sg-modal__hint">Verify your mobile number with the OTP to send your request.</p>}
             <p className="sg-modal__note">
               Free to send. We call you to confirm before anything is paid.
             </p>
@@ -441,6 +452,21 @@ export default function EnquiryModal({ car, trip, onClose }) {
               </a>
               .
             </p>
+            {/* Google's reCAPTCHA badge is hidden (site.css); its terms then
+                ask for this line instead */}
+            {PHONE_OTP_ENABLED && (
+              <p className="sg-modal__legal sg-modal__recaptcha">
+                Protected by reCAPTCHA. Google's{' '}
+                <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">
+                  Privacy Policy
+                </a>{' '}
+                and{' '}
+                <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer">
+                  Terms
+                </a>{' '}
+                apply.
+              </p>
+            )}
           </form>
         )}
         {/* Google's invisible reCAPTCHA for the SMS code (no puzzle for most people) */}

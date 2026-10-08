@@ -2330,6 +2330,20 @@ body:has(.sg) {
   font: 500 0.7rem/1 var(--sg-mono);
 }
 
+.sg-modal__hint {
+  margin-top: 10px;
+  color: var(--sg-ink-2);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.sg-modal .sg-btn--block:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .sg-modal__legal {
   margin-top: 6px;
   color: var(--sg-muted);
@@ -2341,6 +2355,18 @@ body:has(.sg) {
   color: var(--sg-ink-2);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* Google's floating reCAPTCHA badge would sit over the booking form. It
+   may be hidden when the form says it is protected by reCAPTCHA (the
+   .sg-modal__recaptcha line), as Google's terms allow. */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
+
+.sg-modal__recaptcha {
+  margin-top: 2px;
+  font-size: 0.72rem;
 }
 
 /* Mobile number + SMS code check, inside the booking form */
@@ -2404,6 +2430,15 @@ body:has(.sg) {
 .sg-verify__change.sg-textbtn {
   flex: none;
   align-self: center;
+}
+
+.sg-verify__note {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sg-yellow) 18%, var(--sg-paper));
+  color: var(--sg-ink-2);
+  font-size: 0.85rem;
 }
 
 /* The code box that opens under the number */
