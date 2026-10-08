@@ -17,6 +17,7 @@ import {
   tripErrors,
 } from '../validation.js'
 import { PHONE_OTP_ENABLED, confirmCode, isSetupError, otpErrorMessage, sendCode, tokenIfVerified } from '../phoneVerify.js'
+import Icon from './Icon.jsx'
 
 const RESEND_SECONDS = 30
 
@@ -81,16 +82,18 @@ export default function EnquiryModal({ car, trip, onClose }) {
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
-  // The SMS code step: { confirmation, code, error, resendAt } once a code is sent
-  const [otp, setOtp] = useState(null)
+  // Mobile number check by SMS code, inside the form:
+  // idle -> sent (code box shown) -> verified. 'skipped' = Firebase is not
+  // set up yet, so the form sends without a code (see isSetupError).
+  const [verify, setVerify] = useState({ status: 'idle' })
   const [now, setNow] = useState(() => Date.now())
 
-  // Ticks the "Resend code in 25s" countdown
+  // Ticks the "Resend in 25s" countdown
   useEffect(() => {
-    if (!otp) return
+    if (verify.status !== 'sent') return
     const timer = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(timer)
-  }, [otp])
+  }, [verify.status])
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose()
@@ -108,6 +111,8 @@ export default function EnquiryModal({ car, trip, onClose }) {
 
   const set = (key) => (e) => {
     const value = CLEAN[key] ? CLEAN[key](e.target.value) : e.target.value
+    // A different number needs its own check
+    if (key === 'phone' && value !== form.phone && verify.status !== 'idle') setVerify({ status: 'idle' })
     setForm((f) => {
       const next = { ...f, [key]: value }
       // Keep the return date on or after the pickup date
@@ -139,75 +144,78 @@ export default function EnquiryModal({ car, trip, onClose }) {
       setDone(true)
     } catch (err) {
       if (err.status === 400 && Object.keys(err.fields).length) {
-        // Back to the form, which shows the problems (a phone check problem
-        // shows at the bottom)
         const fieldErrors = mapServerErrors(err.fields)
-        if (fieldErrors.phoneToken) fieldErrors.form = fieldErrors.phoneToken
+        // The server didn't accept the number check (e.g. expired): verify again
+        if (fieldErrors.phoneToken) {
+          fieldErrors.phone = fieldErrors.phoneToken
+          setVerify({ status: 'idle' })
+        }
         setErrors(fieldErrors)
-        setOtp(null)
-      } else if (otp) {
-        setOtp((o) => o && { ...o, error: err.message })
       } else {
         setErrors({ form: err.message })
       }
     }
   }
 
-  // Texts a code to the number (Google's invisible reCAPTCHA checks for bots)
-  async function requestCode() {
-    const confirmation = await sendCode(form.phone, 'otp-recaptcha')
-    const sentAt = Date.now()
-    setNow(sentAt)
-    setOtp({ confirmation, code: '', error: '', resendAt: sentAt + RESEND_SECONDS * 1000 })
+  // "Send OTP": texts a 6-digit code (Google's invisible reCAPTCHA checks
+  // for bots). A number already verified in this tab is verified at once.
+  async function sendOtp() {
+    const msg = mobileError(form.phone)
+    if (msg) return setErrors((er) => ({ ...er, phone: msg }))
+    setErrors((er) => ({ ...er, phone: undefined }))
+    setVerify((v) => ({ ...v, status: v.status === 'sent' ? 'sent' : 'sending', error: '' }))
+    try {
+      const token = await tokenIfVerified(form.phone)
+      if (token) return setVerify({ status: 'verified' })
+      const confirmation = await sendCode(form.phone, 'otp-recaptcha')
+      const sentAt = Date.now()
+      setNow(sentAt)
+      setVerify({ status: 'sent', confirmation, code: '', error: '', resendAt: sentAt + RESEND_SECONDS * 1000 })
+    } catch (err) {
+      if (isSetupError(err)) return setVerify({ status: 'skipped' })
+      setVerify({ status: 'idle' })
+      setErrors((er) => ({ ...er, phone: otpErrorMessage(err) }))
+    }
+  }
+
+  async function confirmOtp() {
+    if (!/^\d{6}$/.test(verify.code)) return setVerify({ ...verify, error: 'Enter the 6-digit code from the SMS' })
+    setVerify({ ...verify, checking: true, error: '' })
+    try {
+      await confirmCode(verify.confirmation, verify.code)
+      setVerify({ status: 'verified' })
+    } catch (err) {
+      setVerify((v) => ({ ...v, checking: false, error: otpErrorMessage(err) }))
+    }
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
     const errs = validate(form)
+    if (PHONE_OTP_ENABLED && !errs.phone && !['verified', 'skipped'].includes(verify.status)) {
+      errs.phone = verify.status === 'sent' ? 'Enter the code we sent and tap Verify' : 'Tap "Send OTP" to verify your number'
+    }
     setErrors(errs)
     if (Object.keys(errs).length) return
 
     setSubmitting(true)
     try {
-      if (!PHONE_OTP_ENABLED) return await send(undefined)
-      // Number already verified in this tab (a second enquiry): no new SMS
-      const token = await tokenIfVerified(form.phone)
-      if (token) return await send(token)
-      await requestCode()
+      // A fresh proof (the one from Verify lasts an hour)
+      const token = PHONE_OTP_ENABLED && verify.status === 'verified' ? await tokenIfVerified(form.phone) : undefined
+      if (PHONE_OTP_ENABLED && verify.status === 'verified' && !token) {
+        setVerify({ status: 'idle' })
+        return setErrors({ phone: 'Please verify your number again' })
+      }
+      await send(token || undefined)
     } catch (err) {
-      if (isSetupError(err)) return await send(undefined)
-      setErrors({ form: err.code ? otpErrorMessage(err) : err.message })
+      setErrors({ form: err.message })
     } finally {
       setSubmitting(false)
     }
   }
 
-  async function verifyCode(e) {
-    e.preventDefault()
-    if (!/^\d{6}$/.test(otp.code)) return setOtp({ ...otp, error: 'Enter the 6-digit code from the SMS' })
-    setSubmitting(true)
-    try {
-      const token = await confirmCode(otp.confirmation, otp.code)
-      await send(token)
-    } catch (err) {
-      setOtp((o) => o && { ...o, error: otpErrorMessage(err) })
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  async function resend() {
-    setSubmitting(true)
-    try {
-      await requestCode()
-    } catch (err) {
-      setOtp((o) => o && { ...o, error: otpErrorMessage(err) })
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const resendIn = otp ? Math.max(0, Math.ceil((otp.resendAt - now) / 1000)) : 0
+  const resendIn = verify.status === 'sent' ? Math.max(0, Math.ceil((verify.resendAt - now) / 1000)) : 0
+  const verified = verify.status === 'verified'
 
   const days = rentalDays(form)
 
@@ -228,30 +236,89 @@ export default function EnquiryModal({ car, trip, onClose }) {
     </label>
   )
 
-  // "+91" fixed in front, then exactly 10 digits
+  // "+91" fixed in front, then exactly 10 digits, with the SMS code check
   const phoneField = (
-    <label className={`field ${errors.phone ? 'field--error' : ''}`}>
-      <span>
+    <div className={`field sg-verify ${errors.phone ? 'field--error' : ''}`}>
+      <label htmlFor="enquiry-phone">
         Mobile number<em> *</em>
-      </span>
-      <span className="sg-phone">
-        <span className="sg-phone__code" aria-hidden="true">
-          +91
+      </label>
+      <div className="sg-verify__row">
+        <span className={`sg-phone ${verified ? 'is-verified' : ''}`}>
+          <span className="sg-phone__code" aria-hidden="true">
+            +91
+          </span>
+          <input
+            id="enquiry-phone"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel-national"
+            placeholder="98765 43210"
+            value={form.phone}
+            onChange={set('phone')}
+            onBlur={check('phone')}
+            readOnly={verified}
+            aria-invalid={!!errors.phone}
+            aria-label="Mobile number, 10 digits"
+          />
+          {verified && (
+            <span className="sg-verify__badge">
+              <Icon name="check" size={14} /> Verified
+            </span>
+          )}
         </span>
-        <input
-          type="tel"
-          inputMode="numeric"
-          autoComplete="tel-national"
-          placeholder="98765 43210"
-          value={form.phone}
-          onChange={set('phone')}
-          onBlur={check('phone')}
-          aria-invalid={!!errors.phone}
-          aria-label="Mobile number, 10 digits"
-        />
-      </span>
+        {PHONE_OTP_ENABLED && !verified && verify.status !== 'skipped' && verify.status !== 'sent' && (
+          <button
+            type="button"
+            className="sg-btn sg-btn--ink sg-verify__btn"
+            onClick={sendOtp}
+            disabled={verify.status === 'sending'}
+          >
+            {verify.status === 'sending' ? 'Sending…' : 'Send OTP'}
+          </button>
+        )}
+        {verified && (
+          <button type="button" className="sg-textbtn sg-verify__change" onClick={() => setVerify({ status: 'idle' })}>
+            Change
+          </button>
+        )}
+      </div>
       {errors.phone && <small>{errors.phone}</small>}
-    </label>
+
+      {verify.status === 'sent' && (
+        <div className={`sg-otpbox ${verify.error ? 'has-error' : ''}`}>
+          <p>
+            Enter the 6-digit code sent to <strong>{formatMobile(form.phone)}</strong>
+          </p>
+          <div className="sg-verify__row">
+            <input
+              className="sg-otpbox__code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder="••••••"
+              maxLength={6}
+              value={verify.code}
+              onChange={(e) => setVerify({ ...verify, code: e.target.value.replace(/\D/g, '').slice(0, 6), error: '' })}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), confirmOtp())}
+              autoFocus
+              aria-label="6-digit SMS code"
+              aria-invalid={!!verify.error}
+            />
+            <button type="button" className="sg-btn sg-btn--yellow sg-verify__btn" onClick={confirmOtp} disabled={verify.checking}>
+              {verify.checking ? 'Checking…' : 'Verify'}
+            </button>
+          </div>
+          {verify.error && <small>{verify.error}</small>}
+          <div className="sg-otpbox__links">
+            <button type="button" className="sg-textbtn" onClick={sendOtp} disabled={resendIn > 0}>
+              {resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code'}
+            </button>
+            <button type="button" className="sg-textbtn" onClick={() => setVerify({ status: 'idle' })}>
+              Change number
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 
   // Dropdown of the admin-managed locations. A value from the search box that
@@ -293,43 +360,6 @@ export default function EnquiryModal({ car, trip, onClose }) {
               Done
             </button>
           </div>
-        ) : otp ? (
-          <form className="sg-otp" onSubmit={verifyCode} noValidate>
-            <p className="sg-kicker">Step 2 of 2</p>
-            <h2 id="enquiry-title">
-              Verify your <em>number</em>
-            </h2>
-            <p className="sg-otp__lead">
-              We sent a 6-digit code by SMS to <strong>{formatMobile(form.phone)}</strong>. Enter it to send your booking
-              request.
-            </p>
-            <label className={`field ${otp.error ? 'field--error' : ''}`}>
-              <span>SMS code</span>
-              <input
-                className="sg-otp__code"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder="••••••"
-                maxLength={6}
-                value={otp.code}
-                onChange={(e) => setOtp({ ...otp, code: e.target.value.replace(/\D/g, '').slice(0, 6), error: '' })}
-                autoFocus
-                aria-invalid={!!otp.error}
-              />
-              {otp.error && <small>{otp.error}</small>}
-            </label>
-            <button className="sg-btn sg-btn--yellow sg-btn--lg sg-btn--block" disabled={submitting}>
-              {submitting ? 'Checking…' : 'Verify and send request'}
-            </button>
-            <div className="sg-otp__links">
-              <button type="button" className="sg-textbtn" onClick={resend} disabled={submitting || resendIn > 0}>
-                {resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}
-              </button>
-              <button type="button" className="sg-textbtn" onClick={() => setOtp(null)} disabled={submitting}>
-                Change number
-              </button>
-            </div>
-          </form>
         ) : (
           <form onSubmit={handleSubmit} noValidate>
             <p className="sg-kicker">Booking request</p>
@@ -353,10 +383,8 @@ export default function EnquiryModal({ car, trip, onClose }) {
               </div>
             </div>
 
-            <div className="grid-2">
-              {field('name', 'Your name', { autoComplete: 'name', autoFocus: true, maxLength: NAME_MAX }, true)}
-              {phoneField}
-            </div>
+            {field('name', 'Your name', { autoComplete: 'name', autoFocus: true, maxLength: NAME_MAX }, true)}
+            {phoneField}
 
             {field('email', 'Email (optional)', {
               type: 'email',
@@ -397,11 +425,10 @@ export default function EnquiryModal({ car, trip, onClose }) {
             {errors.form && <p className="alert alert--error">{errors.form}</p>}
 
             <button className="sg-btn sg-btn--yellow sg-btn--lg sg-btn--block" disabled={submitting}>
-              {submitting ? 'Please wait…' : PHONE_OTP_ENABLED ? 'Continue' : 'Send booking request'}
+              {submitting ? 'Sending…' : 'Send booking request'}
             </button>
             <p className="sg-modal__note">
-              {PHONE_OTP_ENABLED ? "Next, we'll text you a code to confirm your number. " : ''}Free to send. We call you to
-              confirm before anything is paid.
+              Free to send. We call you to confirm before anything is paid.
             </p>
             <p className="sg-modal__legal">
               By sending this request you agree to our{' '}

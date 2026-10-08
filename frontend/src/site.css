@@ -2343,34 +2343,126 @@ body:has(.sg) {
   text-underline-offset: 2px;
 }
 
-/* SMS code step */
-.sg-otp__lead {
-  margin: 4px 0 20px;
+/* Mobile number + SMS code check, inside the booking form */
+.sg-modal .sg-verify > label {
   color: var(--sg-ink-2);
+  font: 500 0.68rem/1.2 var(--sg-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.sg-otp__lead strong {
+.sg-modal .sg-verify > label em {
+  color: var(--sg-red);
+  font-style: normal;
+}
+
+.sg-verify__row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.sg-verify__row .sg-phone {
+  flex: 1;
+  min-width: 0;
+}
+
+.sg-verify__btn.sg-btn {
+  flex: none;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+.sg-phone.is-verified {
+  border-color: var(--sg-green);
+  background: color-mix(in srgb, var(--sg-green) 7%, var(--sg-paper));
+}
+
+.sg-modal .sg-phone input[readonly] {
+  background: transparent;
+  color: var(--sg-ink);
+  cursor: default;
+}
+
+.sg-verify__badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  align-self: center;
+  margin-right: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--sg-green);
+  color: #fff;
+  font: 600 0.75rem/1 var(--sg-display);
+}
+
+.sg-verify__change.sg-textbtn {
+  flex: none;
+  align-self: center;
+}
+
+/* The code box that opens under the number */
+.sg-otpbox {
+  margin-top: 10px;
+  padding: 14px;
+  border: 1.5px dashed var(--sg-line);
+  border-radius: 12px;
+  background: var(--sg-card);
+  animation: sg-otp-in 0.25s var(--sg-ease);
+}
+
+.sg-otpbox.has-error {
+  border-color: var(--sg-red);
+}
+
+.sg-otpbox p {
+  margin-bottom: 10px;
+  color: var(--sg-ink-2);
+  font-size: 0.9rem;
+}
+
+.sg-otpbox p strong {
   color: var(--sg-ink);
   white-space: nowrap;
 }
 
-.sg-modal .field input.sg-otp__code {
-  font: 600 1.6rem/1 var(--sg-mono);
-  letter-spacing: 0.5em;
+.sg-modal .sg-otpbox input.sg-otpbox__code {
+  flex: 1;
+  min-width: 0;
+  font: 600 1.35rem/1 var(--sg-mono);
+  letter-spacing: 0.45em;
   text-align: center;
 }
 
-.sg-otp__links {
+.sg-otpbox small {
+  display: block;
+  margin-top: 6px;
+  color: var(--sg-red);
+}
+
+.sg-otpbox__links {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 8px 16px;
-  margin-top: 16px;
+  gap: 6px 16px;
+  margin-top: 10px;
 }
 
-.sg-otp__links .sg-textbtn:disabled {
+.sg-otpbox__links .sg-textbtn:disabled {
   opacity: 0.55;
   cursor: default;
+}
+
+@keyframes sg-otp-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
 }
 
 .sg-modal .success-icon {
