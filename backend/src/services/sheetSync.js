@@ -8,6 +8,7 @@ const enquiriesModel = require('../models/enquiries');
 const { adminCarSchema, TRANSMISSIONS, FUELS } = require('../controllers/adminCars');
 const { locationNameSchema, locationTagSchema } = require('../controllers/adminLocations');
 const { ENQUIRY_STATUSES, formatDateOnly, formatTimeOnly } = require('../controllers/adminEnquiries');
+const { NAME_RE, PHONE_RE, isRealDate } = require('../controllers/enquiries');
 
 // Two-way sync between the database and one Google Sheet with three tabs:
 // Cars, Locations and Enquiries.
@@ -22,14 +23,17 @@ const { ENQUIRY_STATUSES, formatDateOnly, formatTimeOnly } = require('../control
 // A row the rules reject is not saved: the sheet keeps what was typed and
 // the "Sync note" column says what is wrong, until it is fixed.
 // Deleting a row in the sheet deletes nothing: the next run puts it back.
+// Something deleted on the website stays in the sheet, marked "Removed from
+// the website" in its Sync note.
 //
 // A sync runs a few seconds after any admin change or new enquiry. Every
-// minute the sheet alone is read (no database query, so Neon's free
+// 10 seconds the sheet alone is read (no database query, so Neon's free
 // database can still go to sleep); only if it differs from what we last
 // wrote does a full sync run.
 
-const POLL_MS = 60 * 1000;
-const DEBOUNCE_MS = 3000;
+const POLL_MS = 10 * 1000;
+const DEBOUNCE_MS = 1500;
+const REMOVED_NOTE = 'Removed from the website';
 const NOTE_HEADER = 'Sync note';
 const YES_NO = ['Yes', 'No'];
 const STATUS_LABELS = { new: 'New', contacted: 'Contacted', confirmed: 'Booked', closed: 'Closed' };
@@ -73,6 +77,50 @@ function indiaDateTime(value) {
       .map((p) => [p.type, p.value])
   );
   return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
+}
+
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+const pad2 = (n) => String(n).padStart(2, '0');
+
+// A date as typed in the sheet -> 'YYYY-MM-DD', or null.
+// 2026-10-12, 12/10/2026, 12-10-2026, 12.10.2026 (day first, as in India),
+// 12 Oct 2026, Oct 12, 2026
+function parseSheetDate(value) {
+  const v = norm(value).toLowerCase().replace(/,/g, ' ').replace(/\s+/g, ' ');
+  let y, m, d, match;
+  if ((match = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) [, y, m, d] = match;
+  else if ((match = v.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/))) [, d, m, y] = match;
+  else if ((match = v.match(/^(\d{1,2}) ([a-z]{3})[a-z]* (\d{4})$/))) {
+    [, d, m, y] = match;
+    m = MONTHS.indexOf(m) + 1;
+  } else if ((match = v.match(/^([a-z]{3})[a-z]* (\d{1,2}) (\d{4})$/))) {
+    [, m, d, y] = match;
+    m = MONTHS.indexOf(m) + 1;
+  } else return null;
+  const iso = `${y}-${pad2(m)}-${pad2(d)}`;
+  return Number(m) >= 1 && isRealDate(iso) ? iso : null;
+}
+
+// A time as typed in the sheet -> 'HH:MM' (24-hour), or null.
+// 14:30, 14:30:00, 2:30 PM, 2 pm, 9.30 a.m.
+function parseSheetTime(value) {
+  const v = norm(value)
+    .toLowerCase()
+    .replace(/(\d)\.(\d)/g, '$1:$2') // 9.30 -> 9:30
+    .replace(/\./g, '') // a.m. -> am
+    .replace(/\s+/g, ' ');
+  const match = v.match(/^(\d{1,2})(?::(\d{2}))?(?::\d{2})? ?(am|pm)?$/);
+  if (!match) return null;
+  let h = Number(match[1]);
+  const min = Number(match[2] || 0);
+  const ampm = match[3];
+  if (!ampm && match[2] === undefined) return null; // a bare "14" is too vague
+  if (ampm) {
+    if (h < 1 || h > 12) return null;
+    h = (h % 12) + (ampm === 'pm' ? 12 : 0);
+  }
+  if (h > 23 || min > 59) return null;
+  return `${pad2(h)}:${pad2(min)}`;
 }
 
 // ---------- Tabs ----------
@@ -141,9 +189,10 @@ function parseCar(cells, ctx) {
 
 const carsTab = {
   title: 'Cars',
+  color: '#f4b400',
   columns: [
-    { key: 'id', header: 'ID' },
-    { key: 'name', header: 'Name', edit: true },
+    { key: 'id', header: 'ID', width: 56 },
+    { key: 'name', header: 'Name', edit: true, width: 200 },
     { key: 'brand', header: 'Brand', edit: true },
     { key: 'type', header: 'Type', edit: true, list: (ctx) => ctx.types.map((t) => t.label) },
     { key: 'seats', header: 'Seats', edit: true },
@@ -152,8 +201,8 @@ const carsTab = {
     { key: 'price', header: 'Price per day (₹)', edit: true },
     { key: 'available', header: 'Show on website', edit: true, list: () => YES_NO },
     { key: 'featured', header: 'Featured', edit: true, list: () => YES_NO },
-    { key: 'description', header: 'Description', edit: true },
-    { key: 'photos', header: 'Photo links (one per line)', edit: true },
+    { key: 'description', header: 'Description', edit: true, width: 280 },
+    { key: 'photos', header: 'Photo links (one per line)', edit: true, width: 280 },
   ],
   async load(ctx) {
     const label = (slug) => ctx.types.find((t) => t.slug === slug)?.label || slug;
@@ -193,10 +242,11 @@ const carsTab = {
 
 const locationsTab = {
   title: 'Locations',
+  color: '#1d5a40',
   columns: [
-    { key: 'id', header: 'ID' },
-    { key: 'name', header: 'Name', edit: true },
-    { key: 'tag', header: 'Label (shown in brackets)', edit: true },
+    { key: 'id', header: 'ID', width: 56 },
+    { key: 'name', header: 'Name', edit: true, width: 220 },
+    { key: 'tag', header: 'Label (shown in brackets)', edit: true, width: 200 },
   ],
   async load() {
     return (await locationsModel.getAllLocations()).map((l) => ({
@@ -225,24 +275,24 @@ const locationsTab = {
 
 const enquiriesTab = {
   title: 'Enquiries',
+  color: '#1c7ed6',
   columns: [
-    { key: 'id', header: 'ID' },
-    { key: 'received', header: 'Received (India time)' },
-    { key: 'status', header: 'Status', edit: true, list: () => Object.values(STATUS_LABELS) },
-    { key: 'notes', header: 'Notes', edit: true },
-    { key: 'name', header: 'Name' },
-    { key: 'phone', header: 'Phone' },
-    { key: 'email', header: 'Email' },
-    { key: 'car', header: 'Car' },
-    { key: 'pickupLocation', header: 'Pickup location' },
-    { key: 'dropoffLocation', header: 'Drop-off location' },
-    { key: 'startDate', header: 'Pickup date' },
-    { key: 'pickupTime', header: 'Pickup time' },
-    { key: 'endDate', header: 'Return date' },
-    { key: 'dropoffTime', header: 'Return time' },
-    { key: 'message', header: 'Customer message' },
+    { key: 'id', header: 'ID', width: 56 },
+    { key: 'received', header: 'Received (India time)', width: 150 },
+    { key: 'status', header: 'Status', edit: true, width: 120, list: () => Object.values(STATUS_LABELS) },
+    { key: 'notes', header: 'Notes', edit: true, width: 240 },
+    { key: 'name', header: 'Name', edit: true },
+    { key: 'phone', header: 'Phone', edit: true },
+    { key: 'email', header: 'Email', edit: true },
+    { key: 'car', header: 'Car', edit: true, width: 180, list: (ctx) => ctx.cars.map((c) => c.name) },
+    { key: 'pickupLocation', header: 'Pickup location', edit: true },
+    { key: 'dropoffLocation', header: 'Drop-off location', edit: true },
+    { key: 'startDate', header: 'Pickup date', edit: true },
+    { key: 'pickupTime', header: 'Pickup time', edit: true },
+    { key: 'endDate', header: 'Return date', edit: true },
+    { key: 'dropoffTime', header: 'Return time', edit: true },
+    { key: 'message', header: 'Customer message', edit: true, width: 280 },
   ],
-  noCreateNote: "New enquiries can't be added here. They come from the website's booking form.",
   async load() {
     return (await enquiriesModel.getAllEnquiriesUnpaged()).map((e) => ({
       id: e.id,
@@ -266,16 +316,110 @@ const enquiriesTab = {
       raw: e,
     }));
   },
-  async update(id, cells) {
-    const label = norm(cells.status).toLowerCase();
-    const status = ENQUIRY_STATUSES.find((s) => s === label || STATUS_LABELS[s].toLowerCase() === label);
-    if (!status) throw new RowError(`Status: pick one of ${Object.values(STATUS_LABELS).join(', ')}`);
-    const notes = norm(cells.notes);
-    if (notes.length > 2000) throw new RowError('Notes: at most 2000 characters');
-    const updated = await enquiriesModel.updateEnquiry(id, { status, notes });
+  async update(id, cells, ctx, before) {
+    const { details, status, notes } = parseEnquiry(cells, ctx, before);
+    const updated = await enquiriesModel.updateEnquiryDetails(id, details);
     if (!updated) throw new RowError('This enquiry no longer exists');
+    await enquiriesModel.updateEnquiry(id, { status, notes });
+  },
+  // A booking typed into the sheet (e.g. taken by phone)
+  async create(cells, ctx) {
+    const { details, status, notes } = parseEnquiry(cells, ctx, null);
+    const saved = await enquiriesModel.createEnquiry({
+      name: details.name,
+      phone: details.phone,
+      email: details.email,
+      carId: details.car_id,
+      pickupLocation: details.pickup_location,
+      dropoffLocation: details.dropoff_location,
+      startDate: details.start_date,
+      endDate: details.end_date,
+      pickupTime: details.pickup_time,
+      dropoffTime: details.dropoff_time,
+      message: details.message,
+    });
+    await enquiriesModel.updateEnquiry(saved.id, { status, notes });
   },
 };
+
+// Sheet cells -> an enquiry, checked like the booking form (except that
+// past dates are allowed, for corrections and bookings taken earlier).
+// before: the current row when editing, null for a new one.
+function parseEnquiry(cells, ctx, before) {
+  const required = { name: 'Name', phone: 'Phone', pickupLocation: 'Pickup location', dropoffLocation: 'Drop-off location', startDate: 'Pickup date', pickupTime: 'Pickup time', endDate: 'Return date', dropoffTime: 'Return time' };
+  const empty = Object.keys(required).filter((k) => norm(cells[k]) === '');
+  if (empty.length) throw new RowError(`Fill in: ${empty.map((k) => required[k]).join(', ')}`);
+
+  const statusText = norm(cells.status).toLowerCase() || 'new';
+  const status = ENQUIRY_STATUSES.find((s) => s === statusText || STATUS_LABELS[s].toLowerCase() === statusText);
+  if (!status) throw new RowError(`Status: pick one of ${Object.values(STATUS_LABELS).join(', ')}`);
+  const notes = norm(cells.notes);
+  if (notes.length > 2000) throw new RowError('Notes: at most 2000 characters');
+
+  const name = norm(cells.name);
+  if (name.length < 2 || name.length > 100 || !NAME_RE.test(name)) {
+    throw new RowError('Name: letters only, at least 2 characters');
+  }
+  const phone = norm(cells.phone);
+  const digits = phone.replace(/\D/g, '').length;
+  if (!PHONE_RE.test(phone) || digits < 10 || digits > 13) {
+    throw new RowError('Phone: 10 to 13 digits, like +91 98765 43210');
+  }
+  const email = norm(cells.email);
+  if (email && (email.length > 100 || !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email))) {
+    throw new RowError('Email: not a valid email address');
+  }
+
+  // Car: a name from the Cars tab, or empty. An unchanged cell keeps the
+  // current car (even one that was deleted since).
+  const carText = norm(cells.car);
+  let carId = null;
+  if (before && carText === before.cells.car) carId = before.raw.car_id;
+  else if (carText) {
+    const car = ctx.cars.find((c) => c.name.toLowerCase() === carText.toLowerCase());
+    if (!car) throw new RowError('Car: no car with this name. Pick one from the list, or leave it empty');
+    carId = car.id;
+  }
+
+  const place = (key, column) => {
+    const v = norm(cells[key]);
+    if (v.length < 2 || v.length > 200) throw new RowError(`${column}: write the place, like Kochi Airport`);
+    return v;
+  };
+  const date = (key, column) => {
+    const v = parseSheetDate(cells[key]);
+    if (!v) throw new RowError(`${column}: write a date like 12/10/2026`);
+    return v;
+  };
+  const time = (key, column) => {
+    const v = parseSheetTime(cells[key]);
+    if (!v) throw new RowError(`${column}: write a time like 10:00 AM or 14:30`);
+    return v;
+  };
+  const startDate = date('startDate', 'Pickup date');
+  const endDate = date('endDate', 'Return date');
+  if (endDate < startDate) throw new RowError('Return date: must be on or after the pickup date');
+  const message = norm(cells.message);
+  if (message.length > 1000) throw new RowError('Customer message: at most 1000 characters');
+
+  return {
+    status,
+    notes,
+    details: {
+      name,
+      phone,
+      email: email || null,
+      car_id: carId,
+      pickup_location: place('pickupLocation', 'Pickup location'),
+      dropoff_location: place('dropoffLocation', 'Drop-off location'),
+      start_date: startDate,
+      end_date: endDate,
+      pickup_time: time('pickupTime', 'Pickup time'),
+      dropoff_time: time('dropoffTime', 'Return time'),
+      message: message || null,
+    },
+  };
+}
 
 const TABS = [carsTab, locationsTab, enquiriesTab];
 
@@ -312,6 +456,7 @@ async function syncTab(tab, values, snapshot, ctx) {
   const before = new Map((await tab.load(ctx)).map((r) => [r.id, r]));
   const kept = new Map(); // id -> { cells, note } rows that stay as typed
   const failedNew = [];
+  const removedRows = new Map(); // id -> cells: deleted on the website
   let applied = 0;
 
   // A tab with other headers (new, or columns renamed / moved) is not read:
@@ -323,27 +468,32 @@ async function syncTab(tab, values, snapshot, ctx) {
       if (!hasContent) continue;
       const idText = norm(cells.id);
       const id = /^\d+$/.test(idText) ? Number(idText) : null;
+      const old = id !== null ? before.get(id) : undefined;
+      // An ID we have written before (in the snapshot) that the database no
+      // longer has: deleted on the website. Keep the row, marked.
+      if (id !== null && !old && snapshot.has(id)) {
+        removedRows.set(id, cells);
+        continue;
+      }
 
       try {
-        if (id !== null) {
-          const old = before.get(id);
+        if (old) {
+          // Never synced (first run): the database wins. Unchanged: nothing to do.
           const lastHash = snapshot.get(id);
-          // Unknown id (deleted on the website), or never synced: the
-          // database wins
-          if (!old || lastHash === undefined || hashCells(tab, cells) === lastHash) continue;
+          if (lastHash === undefined || hashCells(tab, cells) === lastHash) continue;
           await tab.update(id, cells, ctx, old);
           applied++;
-        } else if (idText !== '') {
-          throw new RowError('ID: leave this empty for a new row. IDs are filled in automatically');
         } else if (!tab.create) {
           throw new RowError(tab.noCreateNote);
         } else {
+          // Empty ID, or an ID the website never had (typed or copied in):
+          // a new row. The website gives it its own ID.
           await tab.create(cells, ctx);
           applied++;
         }
       } catch (err) {
         if (!(err instanceof RowError)) throw err;
-        if (id !== null) kept.set(id, { cells, note: err.message });
+        if (old) kept.set(id, { cells, note: err.message });
         else failedNew.push({ cells, note: err.message });
       }
     }
@@ -362,13 +512,21 @@ async function syncTab(tab, values, snapshot, ctx) {
       nextSnapshot.set(r.id, hashCells(tab, r.cells));
     }
   }
+  // Deleted on the website: the row stays, marked, and its ID stays known
+  // so it is never mistaken for a new row
+  for (const [id, cells] of removedRows) {
+    rows.push(rowOf(tab, cells, REMOVED_NOTE));
+    nextSnapshot.set(id, 'removed');
+  }
   for (const f of failedNew) rows.push(rowOf(tab, f.cells, f.note));
+  const removed = removedRows.size;
 
   return {
     rows,
     snapshot: nextSnapshot,
     applied,
     problems: kept.size + failedNew.length,
+    removed,
     changed: !sameValues(values, rows),
   };
 }
@@ -391,21 +549,27 @@ function layoutRequests(tab, sheetId, existingProtections, ctx) {
         range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: ncols },
         cell: {
           userEnteredFormat: {
-            textFormat: { bold: true },
-            backgroundColor: { red: 0.96, green: 0.71, blue: 0 },
+            textFormat: { bold: true, foregroundColor: rgb('#f4b400') },
+            backgroundColor: rgb('#17201b'),
+            verticalAlignment: 'MIDDLE',
+            padding: { top: 6, bottom: 6, left: 8, right: 8 },
           },
         },
-        fields: 'userEnteredFormat(textFormat,backgroundColor)',
+        fields: 'userEnteredFormat(textFormat,backgroundColor,verticalAlignment,padding)',
       },
     },
   ];
   tab.columns.forEach((c, i) => {
     if (!c.list) return;
+    const values = c.list(ctx);
+    const range = { sheetId, startRowIndex: 1, startColumnIndex: i, endColumnIndex: i + 1 };
+    // Google refuses an empty list (e.g. no cars yet): then no dropdown
+    if (values.length === 0) return requests.push({ setDataValidation: { range } });
     requests.push({
       setDataValidation: {
-        range: { sheetId, startRowIndex: 1, startColumnIndex: i, endColumnIndex: i + 1 },
+        range,
         rule: {
-          condition: { type: 'ONE_OF_LIST', values: c.list(ctx).map((v) => ({ userEnteredValue: v })) },
+          condition: { type: 'ONE_OF_LIST', values: values.map((v) => ({ userEnteredValue: v })) },
           strict: true,
           showCustomUi: true,
         },
@@ -439,7 +603,130 @@ function layoutRequests(tab, sheetId, existingProtections, ctx) {
   return requests;
 }
 
-// Creates missing tabs. Returns { title: { sheetId, protections } }.
+// '#f4b400' -> Sheets colour
+function rgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return { red: ((n >> 16) & 255) / 255, green: ((n >> 8) & 255) / 255, blue: (n & 255) / 255 };
+}
+
+// Column index -> letter (0 -> A, 26 -> AA)
+function colLetter(i) {
+  let out = '';
+  for (let n = i + 1; n > 0; n = Math.floor((n - 1) / 26)) out = String.fromCharCode(65 + ((n - 1) % 26)) + out;
+  return out;
+}
+
+const STATUS_COLORS = {
+  New: ['#e7f0fd', '#1c64c8'],
+  Contacted: ['#fff4d6', '#9a6700'],
+  Booked: ['#e3f6ea', '#1d7a46'],
+  Closed: ['#eeeeee', '#6e766f'],
+};
+
+// The look of a tab, applied once (when it has no striped rows yet):
+// striped rows, column widths, tab colour, coloured Status / Yes-No cells,
+// red Sync notes, and greyed-out, struck-through rows removed from the website
+function styleRequests(tab, sheetId) {
+  const ncols = tab.columns.length + 1;
+  const noteCol = colLetter(ncols - 1);
+  const all = { sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: ncols };
+  const columnOf = (key) => tab.columns.findIndex((c) => c.key === key);
+  const rule = (ranges, condition, format) => ({
+    addConditionalFormatRule: { index: 0, rule: { ranges, booleanRule: { condition, format } } },
+  });
+  const formula = (f) => ({ type: 'CUSTOM_FORMULA', values: [{ userEnteredValue: f }] });
+  const textIs = (v) => ({ type: 'TEXT_EQ', values: [{ userEnteredValue: v }] });
+  const col = (i) => ({ sheetId, startRowIndex: 1, startColumnIndex: i, endColumnIndex: i + 1 });
+
+  const requests = [
+    {
+      updateSheetProperties: {
+        properties: { sheetId, tabColorStyle: { rgbColor: rgb(tab.color) }, gridProperties: { frozenColumnCount: 1 } },
+        fields: 'tabColorStyle,gridProperties.frozenColumnCount',
+      },
+    },
+    {
+      addBanding: {
+        bandedRange: {
+          range: { sheetId, startRowIndex: 0, startColumnIndex: 0, endColumnIndex: ncols },
+          rowProperties: {
+            headerColor: rgb('#17201b'),
+            firstBandColor: rgb('#ffffff'),
+            secondBandColor: rgb('#fbf7ef'),
+          },
+        },
+      },
+    },
+    {
+      repeatCell: {
+        range: all,
+        cell: { userEnteredFormat: { verticalAlignment: 'MIDDLE', wrapStrategy: 'CLIP', padding: { left: 8, right: 8, top: 4, bottom: 4 } } },
+        fields: 'userEnteredFormat(verticalAlignment,wrapStrategy,padding)',
+      },
+    },
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'ROWS', startIndex: 0, endIndex: 1 },
+        properties: { pixelSize: 40 },
+        fields: 'pixelSize',
+      },
+    },
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: ncols - 1, endIndex: ncols },
+        properties: { pixelSize: 260 },
+        fields: 'pixelSize',
+      },
+    },
+    // ID column: small and grey
+    {
+      repeatCell: {
+        range: col(0),
+        cell: { userEnteredFormat: { textFormat: { foregroundColor: rgb('#868e96') }, horizontalAlignment: 'CENTER' } },
+        fields: 'userEnteredFormat.textFormat.foregroundColor,userEnteredFormat.horizontalAlignment',
+      },
+    },
+  ];
+  tab.columns.forEach((c, i) => {
+    requests.push({
+      updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: i, endIndex: i + 1 },
+        properties: { pixelSize: c.width || 130 },
+        fields: 'pixelSize',
+      },
+    });
+  });
+
+  // Added last, so it ends up first and wins: rows removed from the website
+  const rules = [];
+  const status = columnOf('status');
+  if (status >= 0) {
+    for (const [label, [bg, fg]] of Object.entries(STATUS_COLORS)) {
+      rules.push(rule([col(status)], textIs(label), { backgroundColor: rgb(bg), textFormat: { foregroundColor: rgb(fg), bold: true } }));
+    }
+  }
+  for (const key of ['available', 'featured']) {
+    const i = columnOf(key);
+    if (i < 0) continue;
+    rules.push(rule([col(i)], textIs('Yes'), { textFormat: { foregroundColor: rgb('#1d7a46'), bold: true } }));
+    rules.push(rule([col(i)], textIs('No'), { textFormat: { foregroundColor: rgb('#868e96') } }));
+  }
+  rules.push(
+    rule([col(ncols - 1)], formula(`=AND(${noteCol}2<>"", ${noteCol}2<>"${REMOVED_NOTE}")`), {
+      backgroundColor: rgb('#fdecea'),
+      textFormat: { foregroundColor: rgb('#c0392b'), bold: true },
+    })
+  );
+  rules.push(
+    rule([all], formula(`=$${noteCol}2="${REMOVED_NOTE}"`), {
+      backgroundColor: rgb('#f1f1f1'),
+      textFormat: { foregroundColor: rgb('#9aa0a6'), strikethrough: true },
+    })
+  );
+  return [...requests, ...rules];
+}
+
+// Creates missing tabs. Returns { title: { sheetId, protections, styled } }.
 async function ensureTabs() {
   let meta = await sheets.getSpreadsheet();
   const titles = () => meta.sheets.map((s) => s.properties.title);
@@ -451,7 +738,11 @@ async function ensureTabs() {
   return Object.fromEntries(
     meta.sheets.map((s) => [
       s.properties.title,
-      { sheetId: s.properties.sheetId, protections: (s.protectedRanges || []).map((p) => p.description) },
+      {
+        sheetId: s.properties.sheetId,
+        protections: (s.protectedRanges || []).map((p) => p.description),
+        styled: (s.bandedRanges || []).length > 0,
+      },
     ])
   );
 }
@@ -502,7 +793,7 @@ const state = {
 
 async function syncOnce() {
   const tabsMeta = await ensureTabs();
-  const ctx = { types: await carTypesModel.getAllTypes() };
+  const ctx = { types: await carTypesModel.getAllTypes(), cars: await carsModel.getAllCarsUnpaged() };
   const snapshots = await loadSnapshots();
   const values = await sheets.readTabs(TABS.map((t) => t.title));
   let applied = 0;
@@ -515,16 +806,28 @@ async function syncOnce() {
     applied += result.applied;
     problems += result.problems;
     lastRows[tab.title] = result.rows;
-    if (result.changed) {
-      await sheets.writeTab(tab.title, result.rows);
-      const meta = tabsMeta[tab.title];
-      layout.push(...layoutRequests(tab, meta.sheetId, meta.protections, ctx));
-    }
+    const meta = tabsMeta[tab.title];
+    if (result.changed) await sheets.writeTab(tab.title, result.rows);
+    // Header, dropdowns and warnings after each rewrite; the full look once
+    // per tab (also for a tab that existed before the styling was added)
+    if (result.changed || !meta.styled) layout.push(...layoutRequests(tab, meta.sheetId, meta.protections, ctx));
+    if (!meta.styled) layout.push(...styleRequests(tab, meta.sheetId));
+    // A car added from the sheet can be picked on the Enquiries tab in the
+    // same run
+    if (tab === carsTab && result.applied) ctx.cars = await carsModel.getAllCarsUnpaged();
     await saveSnapshot(tab.title, result.snapshot);
   }
-  await sheets.batchUpdate(layout);
   state.lastRows = lastRows;
-  return { applied, problems };
+  // The data is synced at this point. If Google refuses the formatting, say
+  // so, but don't treat the whole sync as failed (that would re-run it, and
+  // query the database, on every check)
+  let warning = null;
+  try {
+    await sheets.batchUpdate(layout);
+  } catch (err) {
+    warning = `Data synced, but the sheet formatting failed: ${err.message}`;
+  }
+  return { applied, problems, warning };
 }
 
 // The minute check: true if the sheet differs from what the last sync left
@@ -539,7 +842,6 @@ async function pollSync() {
   if (state.running || !sheets.isConfigured() || !pool) return;
   try {
     if (await sheetChanged()) await runSync();
-    else state.lastError = null;
     state.lastCheckAt = new Date().toISOString();
   } catch (err) {
     if (state.lastError !== err.message) console.error('sheet sync check failed:', err.message);
@@ -558,10 +860,11 @@ function runSync() {
     try {
       do {
         state.again = false;
-        const { applied, problems } = await syncOnce();
+        const { applied, problems, warning } = await syncOnce();
         state.lastSyncAt = new Date().toISOString();
         state.lastCheckAt = state.lastSyncAt;
-        state.lastError = null;
+        if (warning && warning !== state.lastError) console.error('sheet sync:', warning);
+        state.lastError = warning;
         state.lastApplied = applied;
         state.problems = problems;
         if (applied) console.log(`sheet sync: ${applied} change(s) from the sheet saved`);

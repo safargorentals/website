@@ -126,6 +126,35 @@ async function updateEnquiry(id, data) {
   return getEnquiryById(id);
 }
 
+// Change the customer's details (used by the Google Sheet sync, where the
+// business corrects a booking). The admin panel route never calls this.
+const DETAIL_COLUMNS = [
+  'name',
+  'car_id',
+  'phone',
+  'email',
+  'pickup_location',
+  'dropoff_location',
+  'start_date',
+  'end_date',
+  'pickup_time',
+  'dropoff_time',
+  'message',
+];
+
+async function updateEnquiryDetails(id, data) {
+  const columns = DETAIL_COLUMNS.filter((c) => data[c] !== undefined);
+  if (columns.length === 0) return getEnquiryById(id);
+  const params = columns.map((c) => data[c]);
+  const sets = columns.map((c, i) => `${c} = $${i + 1}`);
+  params.push(id);
+  const { rowCount } = await getPool().query(
+    `UPDATE enquiries SET ${sets.join(', ')} WHERE id = $${params.length}`,
+    params
+  );
+  return rowCount > 0 ? getEnquiryById(id) : null;
+}
+
 // Delete one enquiry.
 // Returns true if a row was deleted, false if the id did not exist.
 async function deleteEnquiry(id) {
@@ -155,6 +184,7 @@ module.exports = {
   getAllEnquiriesUnpaged,
   getEnquiryById,
   updateEnquiry,
+  updateEnquiryDetails,
   deleteEnquiry,
   getEnquiryStats,
 };

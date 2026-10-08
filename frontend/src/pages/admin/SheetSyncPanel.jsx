@@ -25,7 +25,7 @@ export default function SheetSyncPanel({ onUnauthorized }) {
         .then((s) => alive && setStatus(s))
         .catch((err) => alive && fail(err))
     load()
-    const timer = setInterval(load, 30000)
+    const timer = setInterval(load, 15000)
     return () => {
       alive = false
       clearInterval(timer)
@@ -70,7 +70,7 @@ export default function SheetSyncPanel({ onUnauthorized }) {
         )}
         <p className="muted">
           {status.lastCheckAt ? `Up to date, checked ${ago(status.lastCheckAt)}` : 'Not synced yet'} · checks the
-          sheet every minute
+          sheet every 10 seconds
           {status.problems > 0 && (
             <>
               {' '}

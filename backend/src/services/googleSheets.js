@@ -89,7 +89,9 @@ const quote = (title) => `'${title.replace(/'/g, "''")}'`;
 
 // Tab titles -> numeric sheet ids, plus the protected ranges already set
 async function getSpreadsheet() {
-  const data = await call('?fields=properties.title,sheets(properties(sheetId,title),protectedRanges(description))');
+  const data = await call(
+    '?fields=properties.title,sheets(properties(sheetId,title),protectedRanges(description),bandedRanges(bandedRangeId))'
+  );
   return data;
 }
 

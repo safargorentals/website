@@ -21,6 +21,7 @@ function normalize(e) {
     dropoffTime: String(pick('dropoffTime', 'dropoff_time')).slice(0, 5),
     message: e.message || '',
     status: e.status || 'new',
+    notes: e.notes || '',
     createdAt: pick('createdAt', 'created_at'),
   }
 }
@@ -104,8 +105,9 @@ export default function EnquiriesTab({ onUnauthorized }) {
     [onUnauthorized],
   )
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  // quiet: a background refresh, without the "Loading…" flash
+  const load = useCallback(async ({ quiet = false } = {}) => {
+    if (!quiet) setLoading(true)
     setError('')
     try {
       const res = await adminListEnquiries({ status: statusFilter, limit: 100 })
@@ -121,6 +123,19 @@ export default function EnquiriesTab({ onUnauthorized }) {
 
   useEffect(() => {
     load()
+  }, [load])
+
+  // Keep the list fresh: changes made in the Google Sheet (status, notes)
+  // and new enquiries show up without pressing Refresh. Every 10 seconds
+  // while the tab is visible, and right away when coming back to it.
+  useEffect(() => {
+    const refresh = () => document.visibilityState === 'visible' && load({ quiet: true })
+    const timer = setInterval(refresh, 10000)
+    document.addEventListener('visibilitychange', refresh)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', refresh)
+    }
   }, [load])
 
   async function changeStatus(id, status) {
@@ -165,7 +180,7 @@ export default function EnquiriesTab({ onUnauthorized }) {
             </option>
           ))}
         </select>
-        <button className="btn btn--ghost" onClick={load} disabled={loading}>
+        <button className="btn btn--ghost" onClick={() => load()} disabled={loading}>
           Refresh
         </button>
       </div>
@@ -244,6 +259,12 @@ export default function EnquiriesTab({ onUnauthorized }) {
                   <div className="enquiry__message">
                     <dt>Message</dt>
                     <dd>{e.message}</dd>
+                  </div>
+                )}
+                {e.notes && (
+                  <div className="enquiry__message">
+                    <dt>Notes</dt>
+                    <dd>{e.notes}</dd>
                   </div>
                 )}
               </dl>
