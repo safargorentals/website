@@ -8,6 +8,15 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# drivekochi.in is the only public address: the Netlify address sends every
+# page to the same page there (permanently, so search engines follow).
+# Must stay first, so it wins over the rules below.
+[[redirects]]
+  from = "https://safargo-rentals.netlify.app/*"
+  to = "https://drivekochi.in/:splat"
+  status = 301
+  force = true
+
 # Forward API calls to the Render backend. The browser only ever talks to
 # Netlify, so the admin login cookie stays same-site.
 # The Render web service (API only).
