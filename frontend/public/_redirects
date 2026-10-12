@@ -1,0 +1,31 @@
+# Netlify redirects for the Drive Kochi site. Vite copies this file into
+# dist/, so it works for drag-and-drop deploys too (those skip netlify.toml).
+# Rules are checked top to bottom; the first match wins. "!" = force (applies
+# even when a file exists at that path).
+
+# drivekochi.in is the only public address: the Netlify address sends every
+# page to the same page there (permanently, so search engines follow).
+https://drivekochi123.netlify.app/*  https://drivekochi.in/:splat  301!
+
+# Forward API calls to the Render backend. The browser only ever talks to
+# Netlify, so the admin login cookie stays same-site.
+/api/*  https://safargorentals.onrender.com/api/:splat  200!
+
+# /landing is another address for the home page: a permanent redirect, so
+# search engines don't see the same page twice.
+/landing  /  301
+
+# Legal pages, pre-rendered by scripts/prerender.js
+/privacy              /privacy.html              200
+/terms                /terms.html                200
+/cancellation-policy  /cancellation-policy.html  200
+
+# index.html holds the pre-rendered home page (scripts/prerender.js);
+# app.html is the empty app shell. The admin pages load the shell and React
+# Router shows the right page.
+/admin    /app.html  200
+/admin/*  /app.html  200
+
+# Any other unknown path: a real 404 for search engines; in a browser the
+# app then sends the visitor to the home page.
+/*  /app.html  404

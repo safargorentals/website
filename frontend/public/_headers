@@ -1,0 +1,32 @@
+# Netlify response headers for the Drive Kochi site. Vite copies this file
+# into dist/, so it works for drag-and-drop deploys too.
+#
+# Content-Security-Policy: scripts only from this site, plus the one inline
+# script in index.html (allowed by its hash - if you edit that script, update
+# the hash: sha256 of its exact text, base64). Fonts from Google Fonts,
+# images from anywhere over https (car photos), API calls only to this site.
+# Google / Firebase are allowed for the SMS code check on the booking form
+# (reCAPTCHA scripts and frames, Firebase Authentication API calls).
+# frame-ancestors 'none' + X-Frame-Options stop other sites framing the
+# pages (clickjacking).
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-NRVOQup4X13QuKbcQW8mifjkZR5Wzi+SPFpN2W2pw64=' https://www.google.com https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.google.com; frame-src https://www.google.com https://recaptcha.google.com https://drivekochi-a43aa.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+# Admin pages: never cached, never indexed by search engines
+/admin
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow
+/admin/*
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow
+
+# Built assets have content hashes in their names, so they can be cached
+# for a year
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
