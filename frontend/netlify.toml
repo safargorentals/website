@@ -7,103 +7,15 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Site address for canonical URLs, link previews and the sitemap
+  # (scripts/prerender.js)
+  SITE_URL = "https://drivekochi.in"
 
-# drivekochi.in is the only public address: the Netlify address sends every
-# page to the same page there (permanently, so search engines follow).
-# Must stay first, so it wins over the rules below.
-[[redirects]]
-  from = "https://safargo-rentals.netlify.app/*"
-  to = "https://drivekochi.in/:splat"
-  status = 301
-  force = true
-
-# Forward API calls to the Render backend. The browser only ever talks to
-# Netlify, so the admin login cookie stays same-site.
-# The Render web service (API only).
-[[redirects]]
-  from = "/api/*"
-  to = "https://safargorentals.onrender.com/api/:splat"
-  status = 200
-  force = true
-  # To lock the Render API to this site only: add the env var
-  # API_SIGNATURE_TOKEN (a long random secret) in Netlify, set the SAME value
-  # as NETLIFY_PROXY_SECRET on Render, then uncomment this line. Netlify then
-  # signs every proxied request and the API refuses unsigned ones.
-  # signed = "API_SIGNATURE_TOKEN"
-
-# /landing is another address for the home page: a permanent redirect, so
-# search engines don't see the same page twice.
-[[redirects]]
-  from = "/landing"
-  to = "/"
-  status = 301
-
-# Legal pages, pre-rendered by scripts/prerender.js
-[[redirects]]
-  from = "/privacy"
-  to = "/privacy.html"
-  status = 200
-
-[[redirects]]
-  from = "/terms"
-  to = "/terms.html"
-  status = 200
-
-[[redirects]]
-  from = "/cancellation-policy"
-  to = "/cancellation-policy.html"
-  status = 200
-
-# index.html holds the pre-rendered home page (scripts/prerender.js);
-# app.html is the empty app shell. The admin pages load the shell and React
-# Router shows the right page.
-[[redirects]]
-  from = "/admin"
-  to = "/app.html"
-  status = 200
-
-[[redirects]]
-  from = "/admin/*"
-  to = "/app.html"
-  status = 200
-
-# Any other unknown path: a real 404 for search engines; in a browser the
-# app then sends the visitor to the home page.
-[[redirects]]
-  from = "/*"
-  to = "/app.html"
-  status = 404
-
-# Security headers for every page.
-# Content-Security-Policy: scripts only from this site, plus the one inline
-# script in index.html (allowed by its hash - if you edit that script, update
-# the hash: sha256 of its exact text, base64). Fonts from Google Fonts,
-# images from anywhere over https (car photos), API calls only to this site.
-# Google / Firebase are allowed for the SMS code check on the booking form
-# (reCAPTCHA scripts and frames, Firebase Authentication API calls).
-# frame-ancestors 'none' + X-Frame-Options stop other sites framing the
-# pages (clickjacking).
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-NRVOQup4X13QuKbcQW8mifjkZR5Wzi+SPFpN2W2pw64=' https://www.google.com https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.google.com; frame-src https://www.google.com https://recaptcha.google.com https://drivekochi-a43aa.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
-    Cross-Origin-Opener-Policy = "same-origin"
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
-
-# Admin pages: never cached, never indexed by search engines
-[[headers]]
-  for = "/admin*"
-  [headers.values]
-    Cache-Control = "no-store"
-    X-Robots-Tag = "noindex, nofollow"
-
-# Built assets have content hashes in their names, so they can be cached
-# for a year
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+# Redirects (incl. the /api proxy to Render) and security headers live in
+# public/_redirects and public/_headers, so they end up inside dist/ and also
+# work for drag-and-drop deploys, which ignore this file.
+#
+# To lock the Render API to this site only (Netlify signs every proxied
+# request): that needs a netlify.toml redirect with
+#   signed = "API_SIGNATURE_TOKEN"
+# and a Git-connected build; _redirects can't sign requests.

@@ -27,14 +27,14 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      # The Netlify site's URL, e.g. https://safargo.netlify.app
+      # The website's address: https://drivekochi.in
       - key: FRONTEND_URL
         sync: false
       # Netlify proxy + Render proxy in front of the app
       - key: TRUST_PROXY_HOPS
         value: "2"
       # Same value as API_SIGNATURE_TOKEN on Netlify; when set, the API only
-      # answers requests signed by the Netlify proxy (see netlify.toml)
+      # answers requests signed by the Netlify proxy (see frontend/netlify.toml)
       - key: NETLIFY_PROXY_SECRET
         sync: false
       - key: CLOUDINARY_CLOUD_NAME
