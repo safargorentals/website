@@ -50,7 +50,7 @@ const env = {
   // SMS code check of customers' numbers before an enquiry is saved
   // (src/services/phoneToken.js): only with PHONE_OTP=on AND the Firebase
   // project id. Off for now.
-  phoneOtp: process.env.PHONE_OTP === 'on',
+  phoneOtp: process.env.PHONE_OTP === 'off',
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
 };
 
