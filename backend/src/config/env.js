@@ -49,8 +49,8 @@ const env = {
   googleServiceAccountJson: process.env.GOOGLE_SERVICE_ACCOUNT_JSON,
   // SMS code check of customers' numbers before an enquiry is saved
   // (src/services/phoneToken.js): only with PHONE_OTP=on AND the Firebase
-  // project id. Off for now.
-  phoneOtp: process.env.PHONE_OTP === 'off',
+  // project id. Anything else (unset, "off", ...) = no check. Off for now.
+  phoneOtp: process.env.PHONE_OTP === 'on',
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
 };
 
