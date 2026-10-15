@@ -12,8 +12,11 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:686954550218:web:39e66025541d36838db533',
 }
 
-// Off when VITE_PHONE_OTP=off (e.g. while the backend has no FIREBASE_PROJECT_ID)
-export const PHONE_OTP_ENABLED = import.meta.env.VITE_PHONE_OTP !== 'off'
+// Switched OFF for now: the booking form sends without an SMS code. To turn
+// it on, build with VITE_PHONE_OTP=on (frontend/.env) AND set PHONE_OTP=on
+// plus FIREBASE_PROJECT_ID on the backend; real SMS needs Firebase's Blaze
+// plan.
+export const PHONE_OTP_ENABLED = import.meta.env.VITE_PHONE_OTP === 'on'
 
 let authPromise = null
 

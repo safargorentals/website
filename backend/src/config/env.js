@@ -47,8 +47,10 @@ const env = {
   // src/services/sheetSync.js). Both empty = the sync is off.
   googleSheetId: process.env.GOOGLE_SHEET_ID,
   googleServiceAccountJson: process.env.GOOGLE_SERVICE_ACCOUNT_JSON,
-  // Firebase project whose SMS codes verify customers' numbers before an
-  // enquiry is saved (src/services/phoneToken.js). Empty = no SMS check.
+  // SMS code check of customers' numbers before an enquiry is saved
+  // (src/services/phoneToken.js): only with PHONE_OTP=on AND the Firebase
+  // project id. Off for now.
+  phoneOtp: process.env.PHONE_OTP === 'on',
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
 };
 

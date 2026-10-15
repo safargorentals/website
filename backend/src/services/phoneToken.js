@@ -6,7 +6,9 @@ const env = require('../config/env');
 // number that was really verified. Google signs these tokens; its public
 // certificates are fetched and cached for as long as Google says.
 //
-// FIREBASE_PROJECT_ID turns the check on (see .env.example).
+// Switched OFF for now. PHONE_OTP=on plus FIREBASE_PROJECT_ID turn the
+// check on (see .env.example); the website must then be built with
+// VITE_PHONE_OTP=on too.
 
 const CERTS_URL = 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
 // A verified number stays good for a day (several enquiries, one SMS)
@@ -26,7 +28,7 @@ async function getCerts() {
 class PhoneTokenError extends Error {}
 
 function isEnabled() {
-  return !!env.firebaseProjectId;
+  return env.phoneOtp && !!env.firebaseProjectId;
 }
 
 // Returns the verified number ("+919876543210") or throws PhoneTokenError
