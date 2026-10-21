@@ -3,8 +3,9 @@ import { capitalize, formatPrice } from '../constants.js'
 import Icon from './Icon.jsx'
 
 // A car shown as a travel ticket: photo on top, specs, then a tear-off stub
-// with the price and the booking button.
-export default function CarCard({ car, days = 0, onBook }) {
+// with the price and the booking button. priceFrom: show the daily price as
+// a starting price ("from ₹2,000/day").
+export default function CarCard({ car, days = 0, priceFrom = false, onBook }) {
   const carTypes = useCarTypes()
   const ownImage = car.images?.[0]
   const fuel = car.fuel === 'cng' ? 'CNG' : capitalize(car.fuel)
@@ -41,6 +42,7 @@ export default function CarCard({ car, days = 0, onBook }) {
       <div className="sg-ticket__stub">
         <div className="sg-ticket__price">
           <p>
+            {priceFrom && <span>from</span>}
             <strong>{formatPrice(car.pricePerDay, car.currency)}</strong>
             <span>/day</span>
           </p>

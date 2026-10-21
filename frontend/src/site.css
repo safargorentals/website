@@ -1851,6 +1851,20 @@ body:has(.sg) {
   width: fit-content;
 }
 
+.sg-call__email {
+  margin-top: 18px;
+  color: #17201b;
+  font-weight: 600;
+}
+
+.sg-call__email a {
+  color: #17201b;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  overflow-wrap: anywhere;
+}
+
 /* ---------- FAQ ---------- */
 
 .sg-faq {
@@ -1999,7 +2013,7 @@ body:has(.sg) {
 
 .sg-footer__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.4fr) repeat(4, minmax(0, 1fr));
   gap: 32px;
 }
 
@@ -2035,6 +2049,7 @@ body:has(.sg) {
   font: inherit;
   text-align: left;
   text-decoration: none;
+  overflow-wrap: anywhere;
   cursor: pointer;
   transition: color 0.2s;
 }
@@ -2681,4 +2696,292 @@ body:has(.sg) {
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px 24px;
+}
+
+/* Tablets: the logo block takes its own row so the four link columns fit */
+@media (min-width: 761px) and (max-width: 1000px) {
+  .sg-footer__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .sg-footer__about {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---------- Service pages (e.g. /kochi-airport-car-rental) ---------- */
+
+/* Placeholder text still to be filled in ("[TODO: ...]", see Todo.jsx) */
+.sg-todo {
+  padding: 0 0.3em;
+  border-radius: 4px;
+  background: #ffe066;
+  color: #7a1f00;
+  outline: 1px dashed #b93a0c;
+  font: 600 0.85em var(--sg-mono);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sg-crumbs {
+  padding-top: 18px;
+}
+
+.sg-crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--sg-muted);
+  font: 500 0.72rem/1.5 var(--sg-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sg-crumbs li + li::before {
+  content: '›';
+  margin-right: 8px;
+}
+
+.sg-crumbs a {
+  color: var(--sg-ink);
+  text-decoration: none;
+}
+
+.sg-crumbs a:hover {
+  text-decoration: underline;
+}
+
+/* Space under the booking pass before the next section (the home page gets
+   it from the location band's margin) */
+.sg-hero--svc {
+  padding-top: clamp(20px, 3vw, 36px);
+  padding-bottom: clamp(48px, 7vw, 80px);
+}
+
+.sg-hero--svc .sg-hero__grid {
+  align-items: center;
+}
+
+/* Phones: the booking box comes straight after the text */
+@media (max-width: 860px) {
+  .sg-hero--svc .sg-hero__photo {
+    display: none;
+  }
+}
+
+.sg-hero--svc h1 {
+  font-size: clamp(2.5rem, 6.2vw, 5.4rem);
+  line-height: 0.92;
+  text-wrap: balance;
+  animation: sg-rise 0.9s var(--sg-ease) backwards;
+}
+
+.sg-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+  animation: sg-rise 0.9s 0.3s var(--sg-ease) backwards;
+}
+
+.sg-trust li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--sg-line);
+  border-radius: 999px;
+  background: var(--sg-card);
+  color: var(--sg-ink);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.sg-trust .icon {
+  flex: none;
+  color: var(--sg-green);
+}
+
+.sg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* "Return to the same place" + the optional flight number */
+.sg-pass__extra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px 48px;
+  margin-top: 18px;
+}
+
+.sg-pass__extra .sg-check {
+  margin-top: 0;
+}
+
+.sg-pass__field--flight {
+  width: min(100%, 220px);
+}
+
+@media (max-width: 640px) {
+  .sg-pass__field--flight {
+    width: 100%;
+  }
+}
+
+/* Heading on the left, a few paragraphs on the right */
+.sg-prose {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 64px;
+  align-items: start;
+}
+
+.sg-prose + .sg-prose {
+  padding-top: 0;
+}
+
+.sg-prose__head h2 {
+  max-width: 16ch;
+  font-size: clamp(2rem, 4.4vw, 3.4rem);
+  font-weight: 800;
+  font-stretch: 80%;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+}
+
+.sg-prose__body p {
+  max-width: 62ch;
+  font-size: 1.1rem;
+}
+
+.sg-prose__body p + p {
+  margin-top: 1em;
+}
+
+@media (max-width: 900px) {
+  .sg-prose {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+}
+
+/* Destinations as a departures board */
+.sg-drives {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 40px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sg-drives li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 0;
+  border-bottom: 1px solid rgba(242, 235, 220, 0.16);
+}
+
+.sg-drives span {
+  color: var(--sg-night-text);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.sg-drives strong {
+  color: var(--sg-yellow);
+  font: 600 0.95rem var(--sg-mono);
+  white-space: nowrap;
+}
+
+.sg-drives__note {
+  margin-top: 18px;
+  color: var(--sg-night-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .sg-drives {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .sg-drives {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.sg-services {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sg-services a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 96px;
+  padding: 22px 24px;
+  border: 1px solid var(--sg-line);
+  border-radius: 18px;
+  background: var(--sg-card);
+  color: var(--sg-ink);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    transform 0.25s var(--sg-ease),
+    border-color 0.2s;
+}
+
+.sg-services a:hover {
+  border-color: var(--sg-ink);
+  transform: translateY(-3px);
+}
+
+.sg-services .icon {
+  flex: none;
+  color: var(--sg-green);
+}
+
+@media (max-width: 760px) {
+  .sg-services {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Closing strip buttons: dark on the yellow band in both themes */
+.sg-call .sg-actions {
+  margin-top: 32px;
+}
+
+.sg-call .sg-btn--ink {
+  background: #17201b;
+  color: #f2ebdc;
+}
+
+.sg-call .sg-btn--outline {
+  color: #17201b;
+  box-shadow: inset 0 0 0 2px #17201b;
+}
+
+.sg-call .sg-btn--outline:hover:not(:disabled) {
+  background: #17201b;
+  color: #f2ebdc;
 }

@@ -6,6 +6,8 @@ import { todayString } from './constants.js'
 export const NAME_MAX = 60
 export const EMAIL_MAX = 100
 export const MESSAGE_MAX = 1000
+// Flight numbers like "6E 1234" or "EK530" (sent in the enquiry message)
+export const FLIGHT_MAX = 8
 // Bookings can be requested up to a year ahead
 export const MAX_DAYS_AHEAD = 365
 
@@ -14,6 +16,8 @@ const NAME_RE = /^[\p{L}][\p{L}\p{M} .'-]*$/u
 // An Indian mobile number: 10 digits starting with 6, 7, 8 or 9
 const MOBILE_RE = /^[6-9]\d{9}$/
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i
+// Airline code (2 letters / digits), then a 1-4 digit number, maybe a letter
+const FLIGHT_RE = /^[A-Z0-9]{2} ?\d{1,4}[A-Z]?$/
 
 // Keep only what a name can hold, so digits and symbols never get typed in
 export function cleanName(value) {
@@ -53,6 +57,18 @@ export function emailError(value) {
   const v = value.trim()
   if (!v) return ''
   if (v.length > EMAIL_MAX || !EMAIL_RE.test(v)) return 'Enter a valid email, like name@example.com'
+  return ''
+}
+
+// Capital letters, digits and one space only, as it is typed
+export function cleanFlight(value) {
+  return value.toUpperCase().replace(/[^A-Z0-9 ]/g, '').replace(/ {2,}/g, ' ').slice(0, FLIGHT_MAX)
+}
+
+// Optional, so empty is fine
+export function flightError(value) {
+  const v = value.trim()
+  if (v && !FLIGHT_RE.test(v)) return 'Enter a flight number like 6E 1234'
   return ''
 }
 

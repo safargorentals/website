@@ -2,10 +2,11 @@ import { useState } from 'react'
 import useCarTypes from '../carTypes.js'
 import useLocations, { locationLabel } from '../locations.js'
 import { shortDate, todayString } from '../constants.js'
-import { maxDate, tripErrors } from '../validation.js'
+import { FLIGHT_MAX, cleanFlight, flightError, maxDate, tripErrors } from '../validation.js'
 import Icon from './Icon.jsx'
 
-// Dropdown of the locations managed in the admin panel
+// Dropdown of the locations managed in the admin panel. A preset value
+// that is no longer in the list stays selectable, so it isn't silently lost.
 function LocationSelect({ locations, value, onChange }) {
   return (
     <select value={value} onChange={onChange} className={value ? '' : 'is-empty'} title={value || undefined}>
@@ -15,33 +16,37 @@ function LocationSelect({ locations, value, onChange }) {
           {locationLabel(l)}
         </option>
       ))}
+      {value && !locations.some((l) => l.name === value) && <option value={value}>{value}</option>}
     </select>
   )
 }
 
 // The hero booking box. It doesn't search the server by itself: it hands the
 // trip to Home, which filters the fleet, shows trip totals on each car and
-// pre-fills the enquiry form.
-export default function SearchWidget({ initial, onSearch }) {
-  const { types } = useCarTypes()
+// pre-fills the enquiry form. initial: preset trip fields (e.g. the pickup
+// location); showFlight: adds an optional flight number box (airport page);
+// onlyTypes: limits the car type chips to these values.
+export default function SearchWidget({ initial, showFlight = false, onlyTypes, onSearch }) {
+  const { types: allTypes } = useCarTypes()
+  const types = onlyTypes ? allTypes.filter((t) => onlyTypes.includes(t.value)) : allTypes
   const locations = useLocations()
-  const [form, setForm] = useState(
-    () =>
-      initial || {
-        type: '',
-        pickupLocation: '',
-        dropoffLocation: '',
-        sameLocation: true,
-        startDate: todayString(1),
-        pickupTime: '10:00',
-        endDate: todayString(2),
-        dropoffTime: '10:00',
-      },
-  )
+  const [form, setForm] = useState(() => ({
+    type: '',
+    pickupLocation: '',
+    dropoffLocation: '',
+    sameLocation: true,
+    startDate: todayString(1),
+    pickupTime: '10:00',
+    endDate: todayString(2),
+    dropoffTime: '10:00',
+    flightNumber: '',
+    ...initial,
+  }))
   const [error, setError] = useState('')
 
   const set = (key) => (e) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
+    let value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
+    if (key === 'flightNumber') value = cleanFlight(value)
     setForm((f) => {
       const next = { ...f, [key]: value }
       // Keep the return date on or after the pickup date
@@ -57,8 +62,11 @@ export default function SearchWidget({ initial, onSearch }) {
     const errs = tripErrors(form)
     const first = ['startDate', 'endDate', 'pickupTime', 'dropoffTime'].find((k) => errs[k])
     if (first) return setError(errs[first])
+    const flightMsg = showFlight && flightError(form.flightNumber)
+    if (flightMsg) return setError(flightMsg)
     onSearch({
       ...form,
+      flightNumber: showFlight ? form.flightNumber.trim() : '',
       pickupLocation: form.pickupLocation.trim(),
       dropoffLocation: form.sameLocation ? form.pickupLocation.trim() : form.dropoffLocation.trim(),
     })
@@ -133,10 +141,26 @@ export default function SearchWidget({ initial, onSearch }) {
           </div>
         </div>
 
-        <label className="sg-check">
-          <input type="checkbox" checked={form.sameLocation} onChange={set('sameLocation')} />
-          Return to the same place
-        </label>
+        <div className="sg-pass__extra">
+          <label className="sg-check">
+            <input type="checkbox" checked={form.sameLocation} onChange={set('sameLocation')} />
+            Return to the same place
+          </label>
+          {showFlight && (
+            <label className="sg-pass__field sg-pass__field--flight">
+              <span>Flight number (optional)</span>
+              <input
+                value={form.flightNumber}
+                onChange={set('flightNumber')}
+                placeholder="e.g. 6E 1234"
+                maxLength={FLIGHT_MAX}
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+              />
+            </label>
+          )}
+        </div>
       </div>
 
       <div className="sg-pass__stub">

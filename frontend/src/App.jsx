@@ -3,7 +3,9 @@ import Home from './pages/Home.jsx'
 import AdminLogin from './pages/admin/AdminLogin.jsx'
 import AdminDashboard from './pages/admin/AdminDashboard.jsx'
 import Legal from './pages/Legal.jsx'
+import AirportRental from './pages/AirportRental.jsx'
 import { LEGAL_LIST } from './legal.js'
+import { AIRPORT_PATH } from './airport.js'
 
 export default function App() {
   return (
@@ -12,6 +14,7 @@ export default function App() {
       {LEGAL_LIST.map((p) => (
         <Route key={p.path} path={p.path} element={<Legal page={p} />} />
       ))}
+      <Route path={AIRPORT_PATH} element={<AirportRental />} />
       <Route path="/admin" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       {/* /landing is another address for the website */}

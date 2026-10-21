@@ -5,11 +5,14 @@ import useLocations, { locationLabel } from '../locations.js'
 import { formatPrice, rentalDays, todayString } from '../constants.js'
 import {
   EMAIL_MAX,
+  FLIGHT_MAX,
   MESSAGE_MAX,
   NAME_MAX,
+  cleanFlight,
   cleanMobile,
   cleanName,
   emailError,
+  flightError,
   formatMobile,
   maxDate,
   mobileError,
@@ -32,7 +35,13 @@ const EMPTY = {
   pickupTime: '10:00',
   dropoffTime: '10:00',
   message: '',
+  flightNumber: '', // airport page only; sent at the top of the message
   website: '', // honeypot, always empty for humans
+}
+
+// The message as sent: the flight number (if any) on its own first line
+function fullMessage(f) {
+  return [f.flightNumber.trim() && `Flight number: ${f.flightNumber.trim()}`, f.message.trim()].filter(Boolean).join('\n')
 }
 
 // Rules in validation.js; the backend checks them again
@@ -44,7 +53,8 @@ function validate(f) {
   add('email', emailError(f.email))
   if (!f.pickupLocation) e.pickupLocation = 'Choose a pickup location'
   if (!f.dropoffLocation) e.dropoffLocation = 'Choose a drop-off location'
-  if (f.message.length > MESSAGE_MAX) e.message = `Message must be at most ${MESSAGE_MAX} characters`
+  add('flightNumber', flightError(f.flightNumber))
+  if (fullMessage(f).length > MESSAGE_MAX) e.message = `Message must be at most ${MESSAGE_MAX} characters`
   return e
 }
 
@@ -72,10 +82,12 @@ function initialForm(trip) {
     endDate: pick('endDate'),
     pickupTime: pick('pickupTime'),
     dropoffTime: pick('dropoffTime'),
+    flightNumber: pick('flightNumber'),
   }
 }
 
-export default function EnquiryModal({ car, trip, onClose }) {
+// askFlight: show the optional flight number box (airport page)
+export default function EnquiryModal({ car, trip, askFlight = false, onClose }) {
   const carTypes = useCarTypes()
   const locations = useLocations()
   const [form, setForm] = useState(() => initialForm(trip))
@@ -107,7 +119,7 @@ export default function EnquiryModal({ car, trip, onClose }) {
 
   // Names and phone numbers are cleaned as they are typed, so letters can't
   // go into the phone box and the number can't get longer than 10 digits
-  const CLEAN = { name: cleanName, phone: cleanMobile }
+  const CLEAN = { name: cleanName, phone: cleanMobile, flightNumber: cleanFlight }
 
   const set = (key) => (e) => {
     const value = CLEAN[key] ? CLEAN[key](e.target.value) : e.target.value
@@ -134,11 +146,12 @@ export default function EnquiryModal({ car, trip, onClose }) {
     try {
       await createEnquiry({
         ...form,
+        flightNumber: undefined, // goes in the message instead
         carId: car.id,
         name: form.name.trim(),
         phone: formatMobile(form.phone),
         email: form.email.trim(),
-        message: form.message.trim() || undefined,
+        message: (askFlight ? fullMessage(form) : form.message.trim()) || undefined,
         phoneToken,
       })
       setDone(true)
@@ -412,6 +425,15 @@ export default function EnquiryModal({ car, trip, onClose }) {
               {locationField('pickupLocation', 'Pickup location')}
               {locationField('dropoffLocation', 'Drop-off location')}
             </div>
+
+            {askFlight &&
+              field('flightNumber', 'Flight number (optional)', {
+                maxLength: FLIGHT_MAX,
+                placeholder: 'e.g. 6E 1234',
+                autoComplete: 'off',
+                autoCapitalize: 'characters',
+                spellCheck: false,
+              })}
 
             <label className={`field ${errors.message ? 'field--error' : ''}`}>
               <span>Message (optional)</span>
