@@ -1,22 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { getCars, getFeaturedCars } from '../api.js'
 import CarCard from '../components/CarCard.jsx'
 import EnquiryModal from '../components/EnquiryModal.jsx'
 import Icon from '../components/Icon.jsx'
-import Logo, { LogoWord } from '../components/Logo.jsx'
+import FaqList from '../components/FaqList.jsx'
 import SearchWidget from '../components/SearchWidget.jsx'
-import { LegalLinks } from './Legal.jsx'
+import { SiteFooter, SiteHeader, WhatsAppFloat } from '../components/SiteChrome.jsx'
 import useReveal from '../useReveal.js'
-import useTheme from '../theme.js'
-import { useIsAdmin } from './admin/session.js'
 import useCarTypes from '../carTypes.js'
 import useLocations from '../locations.js'
-import { BUSINESS, addressLine } from '../business.js'
 import { FAQ_GROUPS } from '../faqs.js'
 import {
+  CONTACT_EMAIL,
   CONTACT_PHONE,
   WHATSAPP_NUMBER,
+  mailtoHref,
   rentalDays,
   shortDate,
   telHref,
@@ -25,7 +23,6 @@ import {
 import '../site.css'
 
 const PAGE_SIZE = 12
-const YEAR = new Date().getFullYear()
 
 const NAV = [
   { href: '#fleet', label: 'Fleet' },
@@ -79,8 +76,6 @@ function RoundBadge() {
 }
 
 export default function Home() {
-  // A logged-in admin sees the website normally, plus a Dashboard button
-  const isAdmin = useIsAdmin()
   const [type, setType] = useState('')
   const [cars, setCars] = useState([])
   const [page, setPage] = useState(1)
@@ -90,9 +85,6 @@ export default function Home() {
   const [featured, setFeatured] = useState([])
   const [trip, setTrip] = useState(null)
   const [bookingCar, setBookingCar] = useState(null)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
-  const [theme, toggleTheme] = useTheme()
   const { types: carTypes, label: typeLabel, image: typeImage } = useCarTypes()
   // The scrolling band lists the pickup / drop-off locations from the admin
   const locations = useLocations()
@@ -125,14 +117,6 @@ export default function Home() {
     getFeaturedCars()
       .then((res) => setFeatured(res.data))
       .catch(() => {})
-  }, [])
-
-  // Header tightens up once the page is scrolled
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   // Re-scan for new .reveal elements whenever the car lists change
@@ -174,52 +158,7 @@ export default function Home() {
         </div>
       </div>
 
-      <header className={`sg-header ${scrolled ? 'is-scrolled' : ''}`}>
-        <div className="sg-wrap sg-header__inner">
-          <a href="/" className="sg-logo" aria-label="Drive Kochi home">
-            <span className="sg-logo__sign" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="18" height="18">
-                <path d="M7 20V11a3 3 0 0 1 3-3h8M14 4l4 4-4 4" />
-              </svg>
-            </span>
-            <LogoWord tagline />
-          </a>
-          <nav className={`sg-nav ${menuOpen ? 'is-open' : ''}`} aria-label="Main">
-            {NAV.map((n, i) => (
-              <a key={n.href} href={n.href} onClick={() => setMenuOpen(false)}>
-                <small>{pad(i + 1)}</small>
-                {n.label}
-              </a>
-            ))}
-          </nav>
-          {isAdmin && (
-            <Link to="/admin/dashboard" className="sg-btn sg-btn--yellow sg-admin-link">
-              <span className="sg-admin-link__full">Dashboard</span>
-              <span className="sg-admin-link__short">Admin</span>
-              <Icon name="arrow" size={16} />
-            </Link>
-          )}
-          <button
-            className="sg-theme"
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-            title={theme === 'dark' ? 'Light theme' : 'Dark theme'}
-          >
-            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
-          </button>
-          <a href={telHref(CONTACT_PHONE)} className="sg-btn sg-btn--ink sg-header__call">
-            <Icon name="phone" size={16} /> <span>{CONTACT_PHONE}</span>
-          </a>
-          <button
-            className="sg-header__menu"
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((o) => !o)}
-          >
-            <Icon name={menuOpen ? 'close' : 'menu'} size={24} />
-          </button>
-        </div>
-      </header>
+      <SiteHeader nav={NAV} />
 
       <section className="sg-hero">
         <div className="sg-wrap sg-hero__grid">
@@ -233,7 +172,7 @@ export default function Home() {
             </h1>
             <p className="sg-hero__lead">
               Self-drive car rental in Kochi (Cochin) and Ernakulam. SUVs, sedans, hatchbacks, vans and more at clear
-              daily prices. Send a free booking request and we'll call you to confirm. No account, no advance.
+              daily prices. Send a free booking request and we'll call you to confirm. No account needed, and you pay after we confirm.
             </p>
           </div>
 
@@ -435,7 +374,7 @@ export default function Home() {
         <div className="sg-why__lead reveal">
           <p className="sg-kicker">Why Drive Kochi</p>
           <h2 id="why-title">
-            No accounts. No advance. <em>Just a call, and the keys.</em>
+            No accounts. Pay after we confirm. <em>Just a call, and the keys.</em>
           </h2>
         </div>
         <ol className="sg-why__list">
@@ -469,6 +408,9 @@ export default function Home() {
               <Icon name="chat" size={18} /> Or message us on WhatsApp
             </a>
           )}
+          <p className="sg-call__email">
+            Prefer email? Write to <a href={mailtoHref(CONTACT_EMAIL)}>{CONTACT_EMAIL}</a>
+          </p>
         </div>
       </section>
 
@@ -479,94 +421,16 @@ export default function Home() {
             Questions people <em>ask us</em>
           </h2>
           <p>
-            Something else? Call <a href={telHref(CONTACT_PHONE)}>{CONTACT_PHONE}</a>.
+            Something else? Call <a href={telHref(CONTACT_PHONE)}>{CONTACT_PHONE}</a> or email{' '}
+            <a href={mailtoHref(CONTACT_EMAIL)}>{CONTACT_EMAIL}</a>.
           </p>
         </div>
-        <div className="sg-faq__list">
-          {FAQ_GROUPS.map((g, gi) => {
-            const offset = FAQ_GROUPS.slice(0, gi).reduce((n, prev) => n + prev.items.length, 0)
-            return (
-              <div key={g.title} className="sg-faq__group">
-                <h3 className="reveal">{g.title}</h3>
-                {g.items.map((f, i) => (
-                  <details key={f.q} className="reveal" style={{ '--i': i }}>
-                    <summary>
-                      <span>{pad(offset + i + 1)}</span>
-                      {f.q}
-                      <i aria-hidden="true" />
-                    </summary>
-                    <p>{f.a}</p>
-                  </details>
-                ))}
-              </div>
-            )
-          })}
-        </div>
+        <FaqList groups={FAQ_GROUPS} />
       </section>
 
-      <footer className="sg-footer">
-        <div className="sg-wrap sg-footer__grid">
-          <div className="sg-footer__about">
-            <a href="/" className="sg-footer__logo dk-logo dk-logo--night" aria-label="Drive Kochi home">
-              <Logo size={40} tagline />
-            </a>
-            <p>Self-drive car rentals for city trips, weekends away and long journeys.</p>
-            <small>Drive Kochi is a unit of AVS Rent A Car.</small>
-          </div>
-          <div>
-            <h3>Explore</h3>
-            {NAV.map((n) => (
-              <a key={n.href} href={n.href}>
-                {n.label}
-              </a>
-            ))}
-          </div>
-          <div>
-            <h3>Car types</h3>
-            {carTypes.map((t) => (
-              <button key={t.value} onClick={() => pickType(t.value)}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <div>
-            <h3>Contact</h3>
-            <a href={telHref(CONTACT_PHONE)}>{CONTACT_PHONE}</a>
-            {WHATSAPP_NUMBER && (
-              <a href={whatsappHref(WHATSAPP_NUMBER)} target="_blank" rel="noreferrer">
-                WhatsApp
-              </a>
-            )}
-            {addressLine() &&
-              (BUSINESS.mapUrl ? (
-                <a href={BUSINESS.mapUrl} target="_blank" rel="noreferrer">
-                  <address>{addressLine()}</address>
-                </a>
-              ) : (
-                <address>{addressLine()}</address>
-              ))}
-          </div>
-        </div>
-        <p className="sg-footer__word" aria-hidden="true">
-          <LogoWord />
-        </p>
-        <div className="sg-wrap sg-footer__bottom">
-          <span>© {YEAR} Drive Kochi · A unit of AVS Rent A Car</span>
-          <LegalLinks />
-        </div>
-      </footer>
+      <SiteFooter nav={NAV} carTypes={carTypes} onPickType={pickType} />
 
-      {WHATSAPP_NUMBER && (
-        <a
-          className="sg-wa"
-          href={whatsappHref(WHATSAPP_NUMBER, 'Hi, I want to rent a car')}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Chat on WhatsApp"
-        >
-          <Icon name="chat" size={24} />
-        </a>
-      )}
+      <WhatsAppFloat />
 
       {bookingCar && <EnquiryModal car={bookingCar} trip={trip} onClose={closeModal} />}
     </div>

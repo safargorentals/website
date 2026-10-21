@@ -2,12 +2,19 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Icon from '../components/Icon.jsx'
 import { LogoWord } from '../components/Logo.jsx'
-import { CONTACT_PHONE, telHref } from '../constants.js'
+import { CONTACT_EMAIL, CONTACT_PHONE, mailtoHref, telHref } from '../constants.js'
 import { LEGAL_LIST, UPDATED } from '../legal.js'
 import useTheme from '../theme.js'
 import '../site.css'
 
 const YEAR = new Date().getFullYear()
+
+// The contact email in the text, as a link
+function withEmailLink(text) {
+  const parts = text.split(CONTACT_EMAIL)
+  if (parts.length === 1) return text
+  return parts.flatMap((part, i) => (i ? [<a key={i} href={mailtoHref(CONTACT_EMAIL)}>{CONTACT_EMAIL}</a>, part] : [part]))
+}
 
 // Privacy policy, terms and cancellation policy (text in legal.js). Also
 // pre-rendered to plain HTML at build time (scripts/prerender.js).
@@ -60,11 +67,11 @@ export default function Legal({ page }) {
               Array.isArray(p) ? (
                 <ul key={i}>
                   {p.map((item) => (
-                    <li key={item}>{item}</li>
+                    <li key={item}>{withEmailLink(item)}</li>
                   ))}
                 </ul>
               ) : (
-                <p key={i}>{p}</p>
+                <p key={i}>{withEmailLink(p)}</p>
               ),
             )}
             {s.link && (

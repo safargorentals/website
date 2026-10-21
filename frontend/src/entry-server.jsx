@@ -1,4 +1,4 @@
-// Build-time only: renders the home page and legal pages to plain HTML so search engines and
+// Build-time only: renders the home, service and legal pages to plain HTML so search engines and
 // link previews see the content without running JavaScript. Used by
 // scripts/prerender.js; the browser never loads this file.
 import { StrictMode } from 'react'
@@ -9,6 +9,7 @@ import App from './App.jsx'
 export { BUSINESS, addressLine } from './business.js'
 export { FAQ_GROUPS } from './faqs.js'
 export { LEGAL_LIST } from './legal.js'
+export { AIRPORT_FAQS, AIRPORT_META, AIRPORT_PATH } from './airport.js'
 
 export function render(url) {
   return renderToString(

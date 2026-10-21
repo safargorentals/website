@@ -24,6 +24,7 @@ export const ENQUIRY_STATUSES = [
 
 export const CONTACT_PHONE = import.meta.env.VITE_CONTACT_PHONE || '+91 86005 55747'
 export const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || ''
+export const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'admin@drivekochi.in'
 
 export function capitalize(s) {
   return s ? s[0].toUpperCase() + s.slice(1) : ''
@@ -38,6 +39,10 @@ export function formatPrice(amount, currency = 'INR') {
 
 export function telHref(phone) {
   return `tel:${phone.replace(/[^\d+]/g, '')}`
+}
+
+export function mailtoHref(email) {
+  return `mailto:${email}`
 }
 
 export function whatsappHref(phone, text = '') {

@@ -6,6 +6,9 @@
 //   structured data (business details and FAQs)
 // - renders the legal pages (privacy, terms, cancellation) to
 //   dist/<name>.html, each with its own title, description and canonical URL
+// - renders the service pages (e.g. /kochi-airport-car-rental) to
+//   dist/<path>/index.html, with their own tags and structured data
+//   (breadcrumbs, FAQs, the service)
 // - writes dist/sitemap.xml and points robots.txt at it
 //
 // The site address comes from SITE_URL, or from URL, which Netlify sets
@@ -18,7 +21,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const dist = path.join(root, 'dist')
 const ssrEntry = path.join(root, 'dist-ssr', 'entry-server.js')
 
-const { render, BUSINESS, addressLine, FAQ_GROUPS, LEGAL_LIST } = await import(pathToFileURL(ssrEntry).href)
+const { render, BUSINESS, addressLine, FAQ_GROUPS, LEGAL_LIST, AIRPORT_FAQS, AIRPORT_META, AIRPORT_PATH } = await import(
+  pathToFileURL(ssrEntry).href
+)
 
 const siteUrl = (process.env.SITE_URL || process.env.URL || '').replace(/\/$/, '')
 const TITLE = 'Drive Kochi | Self-drive car rental in Kochi (Cochin)'
@@ -82,11 +87,11 @@ function businessData() {
   })
 }
 
-function faqData() {
+function faqData(items = FAQ_GROUPS.flatMap((g) => g.items)) {
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: FAQ_GROUPS.flatMap((g) => g.items).map((f) => ({
+    mainEntity: items.map((f) => ({
       '@type': 'Question',
       name: f.q,
       acceptedAnswer: { '@type': 'Answer', text: f.a },
@@ -94,31 +99,86 @@ function faqData() {
   }
 }
 
-function headTags() {
-  const description = BUSINESS.description
+// Canonical URL plus the Open Graph / Twitter tags link previews read
+function socialTags({ title, description, path }) {
   const tags = [
     `<meta property="og:type" content="website" />`,
     `<meta property="og:site_name" content="${escapeAttr(BUSINESS.name)}" />`,
     `<meta property="og:locale" content="en_IN" />`,
-    `<meta property="og:title" content="${escapeAttr(TITLE)}" />`,
+    `<meta property="og:title" content="${escapeAttr(title)}" />`,
     `<meta property="og:description" content="${escapeAttr(description)}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
-    `<meta name="twitter:title" content="${escapeAttr(TITLE)}" />`,
+    `<meta name="twitter:title" content="${escapeAttr(title)}" />`,
     `<meta name="twitter:description" content="${escapeAttr(description)}" />`,
   ]
   if (siteUrl) {
-    tags.unshift(`<link rel="canonical" href="${siteUrl}/" />`)
+    tags.unshift(`<link rel="canonical" href="${siteUrl}${path}" />`)
     tags.push(
-      `<meta property="og:url" content="${siteUrl}/" />`,
+      `<meta property="og:url" content="${siteUrl}${path}" />`,
       `<meta property="og:image" content="${siteUrl}${SHARE_IMAGE}" />`,
       `<meta property="og:image:width" content="1200" />`,
       `<meta property="og:image:height" content="630" />`,
       `<meta property="og:image:alt" content="A car driving down an open road at sunset" />`,
       `<meta name="twitter:image" content="${siteUrl}${SHARE_IMAGE}" />`,
+      `<meta name="twitter:image:alt" content="A car driving down an open road at sunset" />`,
     )
   }
+  return tags
+}
+
+const indent = (tags) => tags.map((t) => `    ${t}`).join('\n')
+
+function headTags() {
+  const tags = socialTags({ title: TITLE, description: BUSINESS.description, path: '/' })
   tags.push(jsonLd(businessData()), jsonLd(faqData()))
-  return tags.map((t) => `    ${t}`).join('\n')
+  return indent(tags)
+}
+
+// Cochin Airport page: breadcrumbs, the rental service and its FAQs
+function airportTags() {
+  const url = siteUrl ? `${siteUrl}${AIRPORT_PATH}` : ''
+  const tags = socialTags({ title: AIRPORT_META.title, description: AIRPORT_META.description, path: AIRPORT_PATH })
+  if (siteUrl) {
+    tags.push(
+      jsonLd({
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${siteUrl}/` },
+          { '@type': 'ListItem', position: 2, name: AIRPORT_META.breadcrumb, item: url },
+        ],
+      }),
+    )
+  }
+  tags.push(
+    jsonLd(
+      clean({
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: 'Self-drive car rental at Cochin International Airport',
+        serviceType: 'Self-drive car rental',
+        url,
+        description: AIRPORT_META.description,
+        provider: {
+          '@type': 'AutoRental',
+          '@id': siteUrl ? `${siteUrl}/#business` : '',
+          name: BUSINESS.name,
+          legalName: BUSINESS.legalName,
+          telephone: BUSINESS.phone,
+          email: BUSINESS.email,
+          url: siteUrl ? `${siteUrl}/` : '',
+          parentOrganization: { '@type': 'Organization', name: 'AVS Rent A Car' },
+        },
+        areaServed: [
+          { '@type': 'Airport', name: 'Cochin International Airport', iataCode: 'COK' },
+          { '@type': 'Place', name: 'Nedumbassery' },
+          { '@type': 'City', name: 'Kochi' },
+        ],
+      }),
+    ),
+    jsonLd(faqData(AIRPORT_FAQS)),
+  )
+  return indent(tags)
 }
 
 const shell = fs.readFileSync(path.join(dist, 'index.html'), 'utf8')
@@ -149,7 +209,23 @@ for (const p of LEGAL_LIST) {
   fs.writeFileSync(path.join(dist, `${p.path.slice(1)}.html`), html)
 }
 
-const sitemapUrls = ['/', ...LEGAL_LIST.map((p) => p.path)]
+// Service pages: their own title / description / tags, saved as
+// <path>/index.html so the address works without ".html"
+const SERVICE_PAGES = [
+  { path: AIRPORT_PATH, title: AIRPORT_META.title, description: AIRPORT_META.description, tags: airportTags },
+]
+for (const p of SERVICE_PAGES) {
+  const html = shell
+    .replace(/<title>[^<]*<\/title>/, `<title>${escapeAttr(p.title)}</title>`)
+    .replace(/(<meta\s+name="description"\s+content=")[^"]*(")/, `$1${escapeAttr(p.description)}$2`)
+    .replace('</head>', `${p.tags().trimStart()}\n  </head>`)
+    .replace('<div id="root"></div>', `<div id="root">${render(p.path)}</div>`)
+  const dir = path.join(dist, p.path.slice(1))
+  fs.mkdirSync(dir, { recursive: true })
+  fs.writeFileSync(path.join(dir, 'index.html'), html)
+}
+
+const sitemapUrls = ['/', ...SERVICE_PAGES.map((p) => p.path), ...LEGAL_LIST.map((p) => p.path)]
 
 if (siteUrl) {
   fs.writeFileSync(
@@ -170,7 +246,7 @@ ${sitemapUrls
   fs.appendFileSync(path.join(dist, 'robots.txt'), `\nSitemap: ${siteUrl}/sitemap.xml\n`)
 }
 
-console.log(`prerender: home page and ${LEGAL_LIST.length} legal pages rendered${siteUrl ? ` for ${siteUrl}` : ''}`)
+console.log(`prerender: home page, ${SERVICE_PAGES.length} service and ${LEGAL_LIST.length} legal pages rendered${siteUrl ? ` for ${siteUrl}` : ''}`)
 if (!siteUrl) console.warn('prerender: no SITE_URL / URL set, so no canonical URL, share image or sitemap')
 if (!addressLine()) console.warn('prerender: no street address in src/business.js yet')
 

@@ -1,4 +1,4 @@
-import { CONTACT_PHONE } from './constants.js'
+import { CONTACT_EMAIL, CONTACT_PHONE } from './constants.js'
 
 // Text of the legal pages (pages/Legal.jsx). Each page is a list of
 // sections; a section's body is a list of paragraphs, and a paragraph that
@@ -7,9 +7,9 @@ import { CONTACT_PHONE } from './constants.js'
 // Have the business owner read these before relying on them, and update
 // UPDATED whenever the text changes.
 
-export const UPDATED = '7 October 2026'
+export const UPDATED = '21 October 2026'
 
-const CONTACT = `Call or WhatsApp us on ${CONTACT_PHONE}.`
+const CONTACT = `Call or WhatsApp us on ${CONTACT_PHONE}, or email ${CONTACT_EMAIL}.`
 
 export const LEGAL_PAGES = {
   privacy: {
@@ -126,7 +126,7 @@ export const LEGAL_PAGES = {
         heading: 'Payment and security deposit',
         body: [
           'Nothing is charged on this website. A booking amount of ₹1,000 is required to confirm your reservation; it is adjusted against the total rental amount at the time of the trip, and it is non-refundable once the booking is confirmed (see our Refund & Cancellation Policy).',
-          'A refundable security deposit is taken at pickup. It is refunded immediately after the trip is completed and the car is returned in line with these terms, less any amounts you owe, such as damage, fines or extra charges.',
+          'A refundable security deposit is taken at pickup. It is refunded within 3 working days after the trip is completed and the car is returned in line with these terms, less any amounts you owe, such as damage, fines or extra charges.',
         ],
       },
       {
@@ -186,7 +186,7 @@ export const LEGAL_PAGES = {
       {
         heading: '1. Refund Policy',
         body: [
-          'Any refundable security deposit collected for the vehicle will be refunded to the customer immediately after the trip is completed and the vehicle is returned, subject to the vehicle being returned in accordance with the agreed rental terms and conditions.',
+          'Any refundable security deposit collected for the vehicle will be refunded to the customer within 3 working days after the trip is completed and the vehicle is returned, subject to the vehicle being returned in accordance with the agreed rental terms and conditions.',
         ],
       },
       {

@@ -20,6 +20,9 @@ https://drivekochi123.netlify.app/*  https://drivekochi.in/:splat  301!
 /terms                /terms.html                200
 /cancellation-policy  /cancellation-policy.html  200
 
+# Service pages, pre-rendered to <path>/index.html by scripts/prerender.js
+/kochi-airport-car-rental  /kochi-airport-car-rental/index.html  200
+
 # index.html holds the pre-rendered home page (scripts/prerender.js);
 # app.html is the empty app shell. The admin pages load the shell and React
 # Router shows the right page.

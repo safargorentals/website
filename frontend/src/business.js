@@ -1,4 +1,4 @@
-import { CONTACT_PHONE } from './constants.js'
+import { CONTACT_EMAIL, CONTACT_PHONE } from './constants.js'
 
 // Business details for search engines (Google's business info, link
 // previews) and the website footer. Fill in the empty values: anything left
@@ -10,7 +10,7 @@ export const BUSINESS = {
   description:
     'Self-drive car rentals in Kochi: SUVs, sedans, hatchbacks, vans and more at clear daily prices. Pickup at Kochi Airport, Ernakulam and other places across Kochi.',
   phone: CONTACT_PHONE,
-  email: '',
+  email: CONTACT_EMAIL,
   address: {
     street: '', // e.g. '12/345, MG Road'
     locality: 'Kochi',
